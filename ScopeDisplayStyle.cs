@@ -148,13 +148,6 @@ namespace ScopeRangefinder
                 return _whiteSprite;
             }
 
-            Sprite builtin = Resources.GetBuiltinResource<Sprite>("UI/Skin/UISprite.psd");
-            if (builtin != null)
-            {
-                _whiteSprite = builtin;
-                return _whiteSprite;
-            }
-
             var texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
             texture.SetPixel(0, 0, Color.white);
             texture.Apply(false, true);
