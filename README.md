@@ -1,136 +1,72 @@
-maschine-ScopeRangefinder
+# maschine-ScopeRangefinder
 
-Adds a built-in laser rangefinder readout to any magnified optic scope in SPT — similar to the Wilcox RAPTAR ES or Vortex Ranger 1500, but integrated directly into your scope view. No extra item required.
+Adds a built-in laser rangefinder readout to **any magnified optic scope** in SPT — similar to the Wilcox RAPTAR ES or Vortex Ranger 1500, but integrated directly into your scope view. No extra item required.
 
+## Features
 
+- **Universal scope support** — works with all optic scopes, not tied to specific scope prefabs
+- **Distance readout** — raycast-based measurement from the optic camera crosshair
+- **LCD-style display** — compact green readout with a dark background panel, positioned below the reticle
+- **Flexible activation**
+  - By zoom level (`MinZoomBlendFactor`)
+  - By target distance (`MinDisplayDistance`, e.g. only show from 50 m)
+- **Configurable display**
+  - RAPTAR-style (`0123`) or Vortex-style (`045.0`) number format
+  - Adjustable position via built-in defaults plus config offsets
+  - Show delay to sync with the scope zoom animation
+- **Lightweight** — no Harmony patches, minimal performance impact (one raycast every 0.1 s while scoped)
 
-Features
+## Requirements
 
-Universal scope support — works with all optic scopes (IsOptic), not tied to specific scope prefabs
+- SPT with BepInEx
+- Client-side mod only
 
-Distance readout — raycast-based measurement from the optic camera crosshair
+## Installation
 
-LCD-style display — compact green readout with a dark background panel, positioned below the reticle
+1. Build or download `maschine-ScopeRangefinder.dll`
+2. Place it in `BepInEx/plugins/`
+3. Start SPT
+4. Check `BepInEx/LogOutput.log` for: `maschine-ScopeRangefinder v1.0.0 loaded.`
 
-Flexible activation
+## Configuration
 
-By zoom level (MinZoomBlendFactor)
+Config file: `BepInEx/config/com.maschine.ScopeRangefinder.cfg`
 
-By target distance (MinDisplayDistance, e.g. only show from 50 m)
+### General
 
-Configurable display
+| Key | Default | Description |
+| --- | --- | --- |
+| `Enabled` | `true` | Enable or disable the mod |
+| `MaxDistance` | `1500` | Maximum raycast range in meters |
+| `UpdateInterval` | `0.1` | Seconds between distance measurements |
 
-RAPTAR-style (0123) or Vortex-style (045.0) number format
+### Activation
 
-Adjustable position via built-in defaults + config offsets
+| Key | Default | Description |
+| --- | --- | --- |
+| `MinZoomBlendFactor` | `0.3` | Minimum scope zoom (0–1) before the readout appears. `0` = as soon as the optic view is active |
+| `MinDisplayDistance` | `0` | Only show when the target is at least this many meters away. `0` = disabled |
 
-Show delay to sync with scope zoom animation
+When `MinDisplayDistance` is greater than `0`, zoom activation is ignored and only distance is used.
 
-Lightweight — no Harmony patches, minimal performance impact (one raycast every 0.1 s while scoped)
+### Display
 
-Requirements
+| Key | Default | Description |
+| --- | --- | --- |
+| `ShowDelay` | `0.2` | Seconds to wait after entering the scope before showing the readout |
+| `OffsetX` | `0` | Additional horizontal offset in pixels (added to the built-in default position) |
+| `OffsetY` | `0` | Additional vertical offset in pixels (added to the built-in default position) |
+| `UseDecimalFormat` | `false` | `false` = `0123` (RAPTAR-style), `true` = `045.0` (Vortex-style) |
+| `NoDistanceText` | `----` | Text shown when no valid target is hit |
 
-SPT with BepInEx
+`OffsetX` and `OffsetY` are **additional** offsets on top of the built-in default position hardcoded in the mod.
 
-Client-side mod only
+## What it does not do
 
-Installation
+- No automatic zeroing or elevation adjustment
+- Not embedded in individual scope 3D models (uses a screen overlay for universal compatibility)
+- Red dots, holographics, and iron sights are not affected
 
-Build or download maschine-ScopeRangefinder.dll
+## Credits
 
-Place it in BepInEx/plugins/
-
-Start SPT — check BepInEx/LogOutput.log for: maschine-ScopeRangefinder v1.0.0 loaded.
-
-Configuration
-
-Config file: BepInEx/config/com.maschine.ScopeRangefinder.cfg
-
-
-
-Section	Key	Default	Description
-
-General
-
-Enabled
-
-true
-
-Enable/disable the mod
-
-General
-
-MaxDistance
-
-1500
-
-Max raycast range (meters)
-
-General
-
-UpdateInterval
-
-0.1
-
-Seconds between measurements
-
-Activation
-
-MinZoomBlendFactor
-
-0.3
-
-Min zoom before showing (0 = as soon as optic is active)
-
-Activation
-
-MinDisplayDistance
-
-0
-
-Only show when target ≥ X meters (0 = disabled)
-
-Display
-
-ShowDelay
-
-0.2
-
-Delay after entering scope before readout appears
-
-Display
-
-OffsetX / OffsetY
-
-0
-
-Extra pixel offset added to built-in position
-
-Display
-
-UseDecimalFormat
-
-false
-
-false = 0123, true = 045.0
-
-Display
-
-NoDistanceText
-
-\----
-
-Text when no target is hit
-
-Note: OffsetX / OffsetY are additional offsets. The built-in default position is hardcoded in the mod.
-
-
-
-What it does not do
-
-No automatic zeroing / elevation adjustment
-
-Not embedded in individual scope 3D models (screen overlay approach for universal compatibility)
-
-Red dot / holographic / iron sights are not affected
-
+Built for SPT using BepInEx.
