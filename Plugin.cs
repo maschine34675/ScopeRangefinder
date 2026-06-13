@@ -1,17 +1,21 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using BepInEx.Bootstrap;
 
 namespace ScopeRangefinder
 {
     [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
+    [BepInDependency(PiPDisablerGuid, BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
         public const string PluginGuid = "com.maschine.ScopeRangefinder";
         public const string PluginName = "maschine-ScopeRangefinder";
-        public const string PluginVersion = "1.0.0";
+        public const string PluginVersion = "1.0.1";
+        public const string PiPDisablerGuid = "com.fiodor.pipdisabler";
 
         public static ManualLogSource LogSource;
+        public static bool PiPDisablerLoaded;
         public static ConfigEntry<bool> Enabled;
         public static ConfigEntry<float> MaxDistance;
         public static ConfigEntry<float> UpdateInterval;
@@ -49,6 +53,15 @@ namespace ScopeRangefinder
                 "Text shown when no valid target is hit.");
 
             gameObject.AddComponent<ScopeRangefinderComponent>();
+
+            PiPDisablerLoaded = Chainloader.PluginInfos.ContainsKey(PiPDisablerGuid);
+            if (PiPDisablerLoaded)
+            {
+                LogSource.LogInfo(
+                    "PiP-Disabler detected. Vanilla optic camera is disabled while scoped; " +
+                    "ScopeRangefinder will use the main camera as a fallback.");
+            }
+
             LogSource.LogInfo($"{PluginName} v{PluginVersion} loaded.");
         }
     }
