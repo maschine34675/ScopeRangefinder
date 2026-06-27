@@ -1,30 +1,54 @@
-using System;
-using Comfort.Common;
 using EFT;
 using EFT.Animations;
 using EFT.CameraControl;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace ScopeRangefinder
 {
-    internal class ScopeRangefinderComponent : MonoBehaviour
+    internal partial class ScopeRangefinderComponent : MonoBehaviour
     {
         private const int OverlaySortingOrder = 30000;
         private const float RayStartOffset = 0.1f;
         private const float PiPUnreliableHitDistance = 5f;
         private const float PiPCloseHitAgreement = 0.75f;
+        private const float ScopeScaleReferenceFov = 35f;
+        private const float ScopeDisplayDepth = 0.25f;
+        private const float ProjectedOverlayReferenceScale = 0.05f;
+        private const float ProjectedOverlayAnchorDistance = 100f;
+        private const float ProjectedOverlayOffsetMultiplier = 3.6f;
+        private const float ProjectedOverlayScaleMultiplier = 0.7f;
+        private const float ProjectedOverlayReferenceBackgroundWidth = 0.45f;
+        private const float ProjectedOverlayReferenceBackgroundHeight = 0.16f;
+        private const float ProjectedOverlayReferencePanelWidth = 142f;
+        private const float ProjectedOverlayReferencePanelHeight = 46f;
+        private const string WilcoxRaptarTemplateId = "61605d88ffa6e502ac5e7eeb";
 
         private Canvas _canvas;
+        private RectTransform _canvasRect;
         private RectTransform _panelRect;
-        private TextMeshProUGUI _distanceText;
+        private Text _distanceText;
+        private Image[] _panelBackgroundImages;
+        private GameObject _worldRoot;
+        private GameObject _worldBackground;
+        private Material _worldBackgroundMaterial;
+        private Material _worldTextMaterial;
+        private TextMesh _worldDistanceText;
+        private Transform _worldParent;
+        private Camera _activeScopeCamera;
+        private OpticSight _activeOpticSight;
+        private ProceduralWeaponAnimation _activeWeaponAnimation;
+        private bool _worldDisplayNeedsLateLayout;
+        private string _currentLayoutKey;
+        private string _lastLoggedLayoutKey;
         private float _timeSinceLastCast;
         private float _lastMeasuredDistance;
         private bool _lastRaycastHit;
         private bool _isScoped;
         private float _scopedElapsedTime;
         private bool _usingMainCameraScope;
+        private bool _raptarActivationOverride;
+        private static ScopeRangefinderComponent _activeInstance;
         private static readonly int RaycastMask =
             LayerMaskClass.HighPolyWithTerrainMask
             | LayerMaskClass.TransparentLayerMask
@@ -32,25 +56,45 @@ namespace ScopeRangefinder
 
         private void Awake()
         {
+            _activeInstance = this;
+            Camera.onPreCull += HandleCameraPreCull;
             CreateOverlay();
             ResetAndHide();
         }
 
+        private void OnDestroy()
+        {
+            Camera.onPreCull -= HandleCameraPreCull;
+            if (_activeInstance == this)
+            {
+                _activeInstance = null;
+            }
+        }
+
         private void Update()
         {
+            HandleLayoutEditorHotkey();
+
             if (!Plugin.Enabled.Value)
             {
                 ResetAndHide();
                 return;
             }
 
-            ApplyDisplayLayout();
-
-            if (!TryGetScopedState(out Camera scopeCamera, out ProceduralWeaponAnimation weaponAnimation, out Player player))
+            if (!TryGetScopedState(
+                    out Camera scopeCamera,
+                    out OpticSight currentOpticSight,
+                    out ProceduralWeaponAnimation weaponAnimation,
+                    out Player player))
             {
                 ResetAndHide();
                 return;
             }
+
+            _activeScopeCamera = scopeCamera;
+            _activeOpticSight = currentOpticSight;
+            _activeWeaponAnimation = weaponAnimation;
+            _currentLayoutKey = ResolveScopeLayoutKey(currentOpticSight, weaponAnimation);
 
             if (!_isScoped)
             {
@@ -73,365 +117,145 @@ namespace ScopeRangefinder
             if (_scopedElapsedTime < Plugin.DisplayShowDelay.Value || !ShouldShowReadout(weaponAnimation))
             {
                 _canvas.enabled = false;
+                SetWorldDisplayVisible(false);
+                return;
+            }
+
+            ScopeRenderMode renderMode = GetEffectiveRenderMode();
+            if (!_usingMainCameraScope && renderMode == ScopeRenderMode.ExperimentalInScopeCamera)
+            {
+                _canvas.enabled = false;
+                if (!ApplyWorldDisplayLayout(scopeCamera, currentOpticSight, weaponAnimation))
+                {
+                    SetWorldDisplayVisible(false);
+                    return;
+                }
+
+                UpdateDistanceText(false, true);
+                SetWorldDisplayVisible(true);
+                _worldDisplayNeedsLateLayout = true;
+                return;
+            }
+
+            if (renderMode == ScopeRenderMode.ProjectedOverlay)
+            {
+                SetWorldDisplayVisible(false);
+                _worldDisplayNeedsLateLayout = false;
+                if (!ApplyProjectedOverlayLayout(scopeCamera, currentOpticSight, weaponAnimation))
+                {
+                    _canvas.enabled = false;
+                    return;
+                }
+
+                _canvas.enabled = true;
+                UpdateDistanceText(true, false);
+                return;
+            }
+
+            SetWorldDisplayVisible(false);
+            _worldDisplayNeedsLateLayout = false;
+            if (!ApplyDisplayLayout())
+            {
+                _canvas.enabled = false;
                 return;
             }
 
             _canvas.enabled = true;
-            UpdateDistanceText();
+            UpdateDistanceText(true, false);
         }
 
-        private bool TryGetScopedState(
-            out Camera scopeCamera,
-            out ProceduralWeaponAnimation weaponAnimation,
-            out Player player)
+        internal static ScopeRenderMode GetEffectiveRenderMode()
         {
-            scopeCamera = null;
-            weaponAnimation = null;
-            player = null;
-            _usingMainCameraScope = false;
-
-            if (!Singleton<GameWorld>.Instantiated)
+            ScopeRenderMode renderMode = Plugin.ScopeRenderMode.Value;
+            if (Plugin.PiPDisablerLoaded && renderMode == ScopeRenderMode.ProjectedOverlay)
             {
-                return false;
+                return ScopeRenderMode.LegacyOverlay;
             }
 
-            GameWorld gameWorld = Singleton<GameWorld>.Instance;
-            if (gameWorld == null)
-            {
-                return false;
-            }
-
-            player = gameWorld.MainPlayer;
-            if (!IsPlayerUsable(player, gameWorld))
-            {
-                return false;
-            }
-
-            if (player.HandsController is not Player.FirearmController firearmController || !firearmController.IsAiming)
-            {
-                return false;
-            }
-
-            weaponAnimation = player.ProceduralWeaponAnimation;
-            if (weaponAnimation == null
-                || weaponAnimation.ScopeAimTransforms.Count < 1
-                || !weaponAnimation.CurrentScope.IsOptic)
-            {
-                return false;
-            }
-
-            CameraClass cameraClass = CameraClass.Instance;
-            if (cameraClass == null)
-            {
-                return false;
-            }
-
-            GClass3687 opticManager = cameraClass.OpticCameraManager;
-            OpticSight currentOpticSight = opticManager?.CurrentOpticSight;
-            Camera opticCamera = opticManager?.Camera;
-            if (currentOpticSight != null
-                && currentOpticSight.isActiveAndEnabled
-                && opticCamera != null
-                && opticCamera.gameObject.activeInHierarchy)
-            {
-                scopeCamera = opticCamera;
-                return true;
-            }
-
-            if (Plugin.PiPDisablerLoaded)
-            {
-                Camera mainCamera = cameraClass.Camera;
-                if (mainCamera != null && mainCamera.gameObject.activeInHierarchy)
-                {
-                    scopeCamera = mainCamera;
-                    _usingMainCameraScope = true;
-                    return true;
-                }
-            }
-
-            return false;
+            return renderMode;
         }
 
-        private static bool IsPlayerUsable(Player player, GameWorld gameWorld)
+        internal static bool ShouldProcessExperimentalOpticCamera()
         {
-            if (player == null || !player.IsYourPlayer)
+            if (!Plugin.Enabled.Value
+                || GetEffectiveRenderMode() != ScopeRenderMode.ExperimentalInScopeCamera)
             {
                 return false;
             }
 
-            if (player.PlayerBody == null || player.HandsController == null)
-            {
-                return false;
-            }
-
-            if (!gameWorld.AllAlivePlayersList.Contains(player))
-            {
-                return false;
-            }
-
-            return player.PointOfView == EPointOfView.FirstPerson;
+            ScopeRangefinderComponent instance = _activeInstance;
+            return instance == null || !instance._usingMainCameraScope;
         }
 
-        private void ApplyDisplayLayout()
+        private void LateUpdate()
         {
-            if (_panelRect == null)
+            if (!_worldDisplayNeedsLateLayout || _worldRoot == null || !_worldRoot.activeSelf)
             {
                 return;
             }
 
-            _panelRect.anchoredPosition = new Vector2(
-                ScopeDisplayStyle.DefaultOffsetX + Plugin.DisplayOffsetX.Value,
-                ScopeDisplayStyle.DefaultOffsetY + Plugin.DisplayOffsetY.Value);
-        }
-
-        private bool ShouldShowReadout(ProceduralWeaponAnimation weaponAnimation)
-        {
-            float minDistance = Plugin.MinDisplayDistance.Value;
-            if (minDistance > 0f)
+            if (!ApplyWorldDisplayLayout(_activeScopeCamera, _activeOpticSight, _activeWeaponAnimation))
             {
-                return _lastRaycastHit && _lastMeasuredDistance >= minDistance;
-            }
-
-            float minZoom = Plugin.MinZoomBlendFactor.Value;
-            if (minZoom > 0f && !_usingMainCameraScope && !IsZoomedEnough(weaponAnimation, minZoom))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private static bool IsZoomedEnough(ProceduralWeaponAnimation weaponAnimation, float minBlendFactor)
-        {
-            ScopePrefabCache scopeCache = weaponAnimation.CurrentScope.ScopePrefabCache;
-            if (scopeCache == null)
-            {
-                return true;
-            }
-
-            ScopeZoomHandler zoomHandler = scopeCache.GetComponentInChildren<ScopeZoomHandler>(true);
-            if (zoomHandler == null)
-            {
-                return true;
-            }
-
-            return zoomHandler.BlendFactor >= minBlendFactor;
-        }
-
-        private void MeasureDistance(Camera scopeCamera, ProceduralWeaponAnimation weaponAnimation, Player player)
-        {
-            float maxDistance = Plugin.MaxDistance.Value;
-            Vector3 origin = scopeCamera.transform.position;
-            Vector3 direction = scopeCamera.transform.forward;
-
-            if (_usingMainCameraScope)
-            {
-                _lastRaycastHit = TryMeasurePiPDistance(
-                    origin,
-                    direction,
-                    maxDistance,
-                    weaponAnimation,
-                    player,
-                    out _lastMeasuredDistance);
+                SetWorldDisplayVisible(false);
+                _worldDisplayNeedsLateLayout = false;
                 return;
             }
 
-            _lastRaycastHit = Physics.Raycast(
-                origin,
-                direction,
-                out RaycastHit hit,
-                maxDistance,
-                RaycastMask,
-                QueryTriggerInteraction.Ignore);
-            _lastMeasuredDistance = _lastRaycastHit ? hit.distance : 0f;
+            UpdateDistanceText(false, true);
         }
 
-        private static bool TryMeasurePiPDistance(
-            Vector3 cameraOrigin,
-            Vector3 aimDirection,
-            float maxDistance,
-            ProceduralWeaponAnimation weaponAnimation,
-            Player player,
-            out float distance)
+        internal static void AfterOpticCameraUpdated(Camera opticCamera)
         {
-            distance = 0f;
-
-            if (!TryRaycastSkippingSelfHits(
-                    cameraOrigin,
-                    aimDirection,
-                    maxDistance,
-                    weaponAnimation,
-                    player,
-                    out RaycastHit cameraHit))
+            ScopeRangefinderComponent instance = _activeInstance;
+            if (instance == null
+                || opticCamera == null
+                || instance._usingMainCameraScope
+                || !instance._worldDisplayNeedsLateLayout
+                || instance._worldRoot == null
+                || !instance._worldRoot.activeSelf
+                || instance._activeScopeCamera != opticCamera)
             {
-                return false;
-            }
-
-            if (cameraHit.distance >= PiPUnreliableHitDistance)
-            {
-                distance = cameraHit.distance;
-                return true;
-            }
-
-            Transform fireport = weaponAnimation?.HandsContainer?.Fireport;
-            if (fireport != null)
-            {
-                Vector3 fireportOrigin = fireport.position + aimDirection * RayStartOffset;
-                if (TryRaycastSkippingSelfHits(
-                        fireportOrigin,
-                        aimDirection,
-                        maxDistance,
-                        weaponAnimation,
-                        player,
-                        out RaycastHit fireportHit))
-                {
-                    if (fireportHit.distance > cameraHit.distance + 0.25f)
-                    {
-                        distance = fireportHit.distance;
-                        return true;
-                    }
-
-                    if (Mathf.Abs(fireportHit.distance - cameraHit.distance) <= PiPCloseHitAgreement)
-                    {
-                        distance = cameraHit.distance;
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
-        private static bool TryRaycastSkippingSelfHits(
-            Vector3 origin,
-            Vector3 direction,
-            float maxDistance,
-            ProceduralWeaponAnimation weaponAnimation,
-            Player player,
-            out RaycastHit hit)
-        {
-            hit = default;
-            RaycastHit[] hits = Physics.RaycastAll(
-                origin,
-                direction,
-                maxDistance,
-                RaycastMask,
-                QueryTriggerInteraction.Ignore);
-
-            if (hits == null || hits.Length == 0)
-            {
-                return false;
-            }
-
-            Transform weaponRoot = weaponAnimation?.HandsContainer?.WeaponRoot;
-            Transform weaponTransform = weaponAnimation?.HandsContainer?.Weapon?.transform;
-            Transform scopeRoot = weaponAnimation?.CurrentScope?.ScopePrefabCache?.transform;
-            Transform scopeBone = weaponAnimation?.CurrentScope?.Bone;
-            Transform cameraContainer = weaponAnimation?.CameraContainer?.transform;
-            Transform trackingTransform = weaponAnimation?.HandsContainer?.TrackingTransform;
-
-            float bestDistance = float.MaxValue;
-            bool found = false;
-
-            for (int i = 0; i < hits.Length; i++)
-            {
-                RaycastHit candidate = hits[i];
-                if (candidate.distance < RayStartOffset)
-                {
-                    continue;
-                }
-
-                if (ShouldIgnoreSelfHit(
-                        candidate,
-                        weaponRoot,
-                        weaponTransform,
-                        scopeRoot,
-                        scopeBone,
-                        cameraContainer,
-                        trackingTransform,
-                        player))
-                {
-                    continue;
-                }
-
-                if (candidate.distance < bestDistance)
-                {
-                    bestDistance = candidate.distance;
-                    hit = candidate;
-                    found = true;
-                }
-            }
-
-            return found;
-        }
-
-        private static bool ShouldIgnoreSelfHit(
-            RaycastHit hit,
-            Transform weaponRoot,
-            Transform weaponTransform,
-            Transform scopeRoot,
-            Transform scopeBone,
-            Transform cameraContainer,
-            Transform trackingTransform,
-            Player player)
-        {
-            Transform hitTransform = hit.collider.transform;
-            if (hitTransform == null)
-            {
-                return false;
-            }
-
-            if (IsTransformInHierarchy(hitTransform, weaponRoot)
-                || IsTransformInHierarchy(hitTransform, weaponTransform)
-                || IsTransformInHierarchy(hitTransform, scopeRoot)
-                || IsTransformInHierarchy(hitTransform, scopeBone)
-                || IsTransformInHierarchy(hitTransform, cameraContainer)
-                || IsTransformInHierarchy(hitTransform, trackingTransform))
-            {
-                return true;
-            }
-
-            if (player?.PlayerBody != null)
-            {
-                if (IsTransformInHierarchy(hitTransform, player.PlayerBody.transform)
-                    || IsTransformInHierarchy(hitTransform, player.PlayerBody.MeshTransform))
-                {
-                    return true;
-                }
-            }
-
-            Transform playerTransform = player?.Transform?.Original;
-            if (IsTransformInHierarchy(hitTransform, playerTransform))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool IsTransformInHierarchy(Transform hitTransform, Transform root)
-        {
-            return root != null && (hitTransform == root || hitTransform.IsChildOf(root));
-        }
-
-        private void UpdateDistanceText()
-        {
-            if (!_lastRaycastHit)
-            {
-                _distanceText.SetMonospaceText(Plugin.NoDistanceText.Value, true);
                 return;
             }
 
-            if (Plugin.UseDecimalFormat.Value)
+            if (!instance.ApplyWorldDisplayLayout(
+                    instance._activeScopeCamera,
+                    instance._activeOpticSight,
+                    instance._activeWeaponAnimation))
             {
-                float clamped = Mathf.Clamp(_lastMeasuredDistance, 0f, 999f);
-                _distanceText.SetMonospaceText(clamped.ToString("000.0"), true);
+                instance.SetWorldDisplayVisible(false);
+                instance._worldDisplayNeedsLateLayout = false;
+                return;
             }
-            else
+
+            instance.UpdateDistanceText(false, true);
+        }
+
+        private static void HandleCameraPreCull(Camera camera)
+        {
+            ScopeRangefinderComponent instance = _activeInstance;
+            if (instance == null
+                || camera == null
+                || instance._usingMainCameraScope
+                || !instance._worldDisplayNeedsLateLayout
+                || instance._worldRoot == null
+                || !instance._worldRoot.activeSelf
+                || instance._activeScopeCamera != camera)
             {
-                int meters = Mathf.RoundToInt(_lastMeasuredDistance);
-                _distanceText.SetMonospaceText(meters.ToString("D4"), true);
+                return;
             }
+
+            if (!instance.ApplyWorldDisplayLayout(
+                    instance._activeScopeCamera,
+                    instance._activeOpticSight,
+                    instance._activeWeaponAnimation))
+            {
+                instance.SetWorldDisplayVisible(false);
+                instance._worldDisplayNeedsLateLayout = false;
+                return;
+            }
+
+            instance.UpdateDistanceText(false, true);
         }
 
         private void ResetAndHide()
@@ -439,36 +263,22 @@ namespace ScopeRangefinder
             _isScoped = false;
             _scopedElapsedTime = 0f;
             _usingMainCameraScope = false;
+            _activeScopeCamera = null;
+            _activeOpticSight = null;
+            _activeWeaponAnimation = null;
+            _currentLayoutKey = null;
+            _worldDisplayNeedsLateLayout = false;
 
             if (_canvas != null)
             {
                 _canvas.enabled = false;
             }
 
+            SetWorldDisplayVisible(false);
+
             _timeSinceLastCast = 0f;
             _lastRaycastHit = false;
             _lastMeasuredDistance = 0f;
-        }
-
-        private void CreateOverlay()
-        {
-            var canvasObject = new GameObject("ScopeRangefinderCanvas");
-            canvasObject.transform.SetParent(transform, false);
-
-            _canvas = canvasObject.AddComponent<Canvas>();
-            _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            _canvas.sortingOrder = OverlaySortingOrder;
-            _canvas.overrideSorting = true;
-
-            var scaler = canvasObject.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.matchWidthOrHeight = 0.5f;
-
-            RectTransform panelRect = ScopeDisplayStyle.CreateDisplayPanel(canvasObject.transform);
-
-            _panelRect = panelRect;
-            _distanceText = ScopeDisplayStyle.CreateReadoutText(panelRect);
         }
     }
 }

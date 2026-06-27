@@ -8,7 +8,7 @@
     <Company>https://github.com/maschine34675/ScopeRangefinder</Company>
     <AssemblyName>maschine-ScopeRangefinder</AssemblyName>
     <Copyright></Copyright>
-    <AssemblyVersion>1.0.1</AssemblyVersion>
+    <AssemblyVersion>1.1.0</AssemblyVersion>
     <FileVersion>$(AssemblyVersion)</FileVersion>
     <Configurations>Debug;Release;Package</Configurations>
     <Version>$(AssemblyVersion)</Version>
@@ -61,6 +61,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\EscapeFromTarkov_Data\Managed\Comfort.Unity.dll</HintPath>
     </Reference>
+    <Reference Include="ItemComponent.Types">
+      <HintPath>..\..\EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\EscapeFromTarkov_Data\Managed\Newtonsoft.Json.dll</HintPath>
@@ -69,16 +72,11 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\EscapeFromTarkov_Data\Managed\Sirenix.Serialization.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\EscapeFromTarkov_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+    <Reference Include="Unity.Postprocessing.Runtime">
+      <HintPath>..\..\EscapeFromTarkov_Data\Managed\Unity.Postprocessing.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\..\EscapeFromTarkov_Data\Managed\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AssetBundleModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\EscapeFromTarkov_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
@@ -104,6 +102,12 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;$(ProjectDir)\..\..\BepInEx\plugins\$(TargetFileName)&quot;" />
+    <MakeDir Directories="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder" />
+    <Copy
+      SourceFiles="$(ProjectDir)ScopeRangefinder.layouts.json"
+      DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder"
+      Condition="Exists('$(ProjectDir)ScopeRangefinder.layouts.json') And !Exists('$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder\ScopeRangefinder.layouts.json')" />
+    <Delete Files="$(ProjectDir)..\..\BepInEx\plugins\$(TargetFileName)" />
   </Target>
 </Project>

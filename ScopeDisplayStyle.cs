@@ -1,5 +1,4 @@
 using System;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,74 +10,62 @@ namespace ScopeRangefinder
         public const float DefaultOffsetY = 50f;
 
         private static Sprite _whiteSprite;
-        private static TMP_FontAsset _cachedFont;
+        private static Font _cachedFont;
+        private static string _cachedFontName;
 
-        private static readonly string[] PreferredFontNameParts =
+        private static readonly string[] FallbackOsFontNames =
         {
-            "DS-Digital",
-            "Digital",
-            "LCD",
-            "7segment",
-            "7-segment",
-            "Segment",
-            "Mono",
-            "Monospace",
-            "Timer",
-            "Clock",
-            "BN SDF",
-            "BM SDF",
-            "RobotoMono",
+            "Consolas",
+            "Roboto",
+            "Bahnschrift Light Condensed",
+            "Bahnschrift Condensed",
+            "Arial Narrow",
+            "Arial"
         };
 
-        public static TMP_FontAsset LoadRangefinderFont()
+        public static Font LoadRangefinderFont()
         {
+            string requestedFontName = Plugin.ScopeFontName?.Value ?? "Consolas";
+            if (_cachedFont != null && string.Equals(_cachedFontName, requestedFontName, StringComparison.OrdinalIgnoreCase))
+            {
+                return _cachedFont;
+            }
+
+            _cachedFontName = requestedFontName;
+            _cachedFont = Font.CreateDynamicFontFromOSFont(GetPreferredOsFontNames(), 96);
             if (_cachedFont != null)
             {
                 return _cachedFont;
             }
 
-            TMP_FontAsset[] fonts = Resources.LoadAll<TMP_FontAsset>("UI/Fonts");
-            if (fonts != null)
-            {
-                for (int p = 0; p < PreferredFontNameParts.Length; p++)
-                {
-                    string part = PreferredFontNameParts[p];
-                    for (int i = 0; i < fonts.Length; i++)
-                    {
-                        TMP_FontAsset font = fonts[i];
-                        if (font != null && font.name.IndexOf(part, StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            _cachedFont = font;
-                            return _cachedFont;
-                        }
-                    }
-                }
-
-                for (int i = 0; i < fonts.Length; i++)
-                {
-                    if (fonts[i] != null)
-                    {
-                        _cachedFont = fonts[i];
-                        return _cachedFont;
-                    }
-                }
-            }
-
-            _cachedFont = TMP_Settings.defaultFontAsset;
+            _cachedFont = Font.CreateDynamicFontFromOSFont("Arial", 96);
             return _cachedFont;
         }
 
-        public static void ApplyReadoutStyle(TextMeshProUGUI text)
+        public static string[] GetPreferredOsFontNames()
+        {
+            string configuredFontName = Plugin.ScopeFontName?.Value;
+            if (string.IsNullOrWhiteSpace(configuredFontName))
+            {
+                return FallbackOsFontNames;
+            }
+
+            string[] fontNames = new string[FallbackOsFontNames.Length + 1];
+            fontNames[0] = configuredFontName.Trim();
+            Array.Copy(FallbackOsFontNames, 0, fontNames, 1, FallbackOsFontNames.Length);
+            return fontNames;
+        }
+
+        public static void ApplyReadoutStyle(Text text)
         {
             text.font = LoadRangefinderFont();
             text.raycastTarget = false;
-            text.alignment = TextAlignmentOptions.Center;
-            text.fontSize = 32f;
-            text.fontStyle = FontStyles.Normal;
-            text.characterSpacing = 6f;
+            text.alignment = TextAnchor.MiddleCenter;
+            text.fontSize = 32;
+            text.fontStyle = FontStyle.Normal;
             text.color = new Color(0.18f, 0.98f, 0.22f, 0.96f);
-            text.outlineWidth = 0.12f;
-            text.outlineColor = new Color(0f, 0.12f, 0f, 0.9f);
+            text.horizontalOverflow = HorizontalWrapMode.Overflow;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
         }
 
         public static RectTransform CreateDisplayPanel(Transform parent)
@@ -99,7 +86,7 @@ namespace ScopeRangefinder
             return panelRect;
         }
 
-        public static TextMeshProUGUI CreateReadoutText(RectTransform panelRect)
+        public static Text CreateReadoutText(RectTransform panelRect)
         {
             var textObject = new GameObject("DistanceText");
             textObject.transform.SetParent(panelRect, false);
@@ -110,7 +97,7 @@ namespace ScopeRangefinder
             rectTransform.offsetMin = new Vector2(6f, 3f);
             rectTransform.offsetMax = new Vector2(-6f, -3f);
 
-            var text = textObject.AddComponent<TextMeshProUGUI>();
+            var text = textObject.AddComponent<Text>();
             ApplyReadoutStyle(text);
             return text;
         }
