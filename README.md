@@ -205,3 +205,6 @@ These options only matter when `ScopeRenderMode = LegacyOverlay`.
 ## Credits
 
 Built for SPT using BepInEx and Harmony.
+
+
+![options](https://github.com/maschine34675/ScopeRangefinder/blob/main/examplepictures/options.png?raw=true)
