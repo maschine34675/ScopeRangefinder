@@ -5,8 +5,10 @@ namespace ScopeRangefinder
 {
     internal partial class ScopeRangefinderComponent
     {
-        private const float LayoutEditorOffsetStep = 0.001f;
+        private const float LayoutEditorOffsetStep = 0.002f;
         private const float LayoutEditorScaleStep = 0.0025f;
+        private const float LayoutEditorMinimumScaleAdjustment = -0.045f;
+        private const float LayoutEditorMaximumScaleAdjustment = 0.20f;
 
         private bool _layoutEditorVisible;
         private Rect _layoutEditorRect = new Rect(24f, 120f, 360f, 290f);
@@ -15,17 +17,21 @@ namespace ScopeRangefinder
         private float _editorOffsetY;
         private float _editorScale;
         private string _editorStatus = string.Empty;
+        private bool _savedCursorVisible;
+        private CursorLockMode _savedCursorLockState;
+        private bool _hasSavedCursorState;
         internal static bool BlocksGameMouseInput { get; private set; }
 
         private void HandleLayoutEditorHotkey()
         {
             if (Plugin.LayoutEditorToggle.Value.IsDown())
             {
-                _layoutEditorVisible = !_layoutEditorVisible;
-                if (_layoutEditorVisible)
-                {
-                    LoadEditorDraftForCurrentScope();
-                }
+                SetLayoutEditorVisible(!_layoutEditorVisible);
+            }
+
+            if (_layoutEditorVisible)
+            {
+                ShowLayoutEditorCursor();
             }
         }
 
@@ -79,7 +85,10 @@ namespace ScopeRangefinder
             GUILayout.Space(8f);
             _editorOffsetX = DrawFloatControl("OffsetX", _editorOffsetX, LayoutEditorOffsetStep);
             _editorOffsetY = DrawFloatControl("OffsetY", _editorOffsetY, LayoutEditorOffsetStep);
-            _editorScale = Mathf.Max(0.0001f, DrawFloatControl("Scale", _editorScale, LayoutEditorScaleStep));
+            _editorScale = Mathf.Clamp(
+                DrawFloatControl("Scale", _editorScale, LayoutEditorScaleStep),
+                LayoutEditorMinimumScaleAdjustment,
+                LayoutEditorMaximumScaleAdjustment);
 
             GUILayout.Space(8f);
             GUILayout.BeginHorizontal();
@@ -96,7 +105,7 @@ namespace ScopeRangefinder
 
             if (GUILayout.Button("Close"))
             {
-                _layoutEditorVisible = false;
+                SetLayoutEditorVisible(false);
             }
             GUI.enabled = true;
             GUILayout.EndHorizontal();
@@ -107,6 +116,50 @@ namespace ScopeRangefinder
             }
 
             GUI.DragWindow();
+        }
+
+        private void SetLayoutEditorVisible(bool visible)
+        {
+            if (_layoutEditorVisible == visible)
+            {
+                return;
+            }
+
+            _layoutEditorVisible = visible;
+            if (visible)
+            {
+                ShowLayoutEditorCursor();
+                LoadEditorDraftForCurrentScope();
+                return;
+            }
+
+            BlocksGameMouseInput = false;
+            RestoreLayoutEditorCursor();
+        }
+
+        private void ShowLayoutEditorCursor()
+        {
+            if (!_hasSavedCursorState)
+            {
+                _savedCursorVisible = Cursor.visible;
+                _savedCursorLockState = Cursor.lockState;
+                _hasSavedCursorState = true;
+            }
+
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+
+        private void RestoreLayoutEditorCursor()
+        {
+            if (!_hasSavedCursorState)
+            {
+                return;
+            }
+
+            Cursor.visible = _savedCursorVisible;
+            Cursor.lockState = _savedCursorLockState;
+            _hasSavedCursorState = false;
         }
 
         private bool IsMouseOverEditorWindow()
@@ -171,9 +224,9 @@ namespace ScopeRangefinder
             _editorStatus = string.Empty;
 
             ScopeLayoutEntry layout = Plugin.ScopeLayouts?.GetForScope(layoutKey) ?? new ScopeLayoutEntry();
-            _editorOffsetX = layout.OffsetX ?? Plugin.ScopeLocalOffsetX.Value;
-            _editorOffsetY = layout.OffsetY ?? Plugin.ScopeLocalOffsetY.Value;
-            _editorScale = layout.Scale ?? Plugin.ScopeWorldScale.Value;
+            _editorOffsetX = layout.OffsetX ?? 0f;
+            _editorOffsetY = layout.OffsetY ?? 0f;
+            _editorScale = layout.Scale ?? 0f;
         }
 
         private void SaveEditorDraft()
@@ -210,7 +263,7 @@ namespace ScopeRangefinder
             bool saved = Plugin.ScopeLayouts?.Save() ?? false;
             _layoutEditorKey = null;
             LoadEditorDraft(_currentLayoutKey);
-            _editorStatus = saved ? "Reset to global defaults" : "Reset failed";
+            _editorStatus = saved ? "Reset to presets" : "Reset failed";
         }
     }
 }

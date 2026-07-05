@@ -8,16 +8,15 @@ The mod includes layout presets for vanilla scopes and an in-game layout editor 
 
 - Range readout while aiming through magnified optics
 - Scope-bound display that moves with the optic view
-- Optional projected overlay mode for TAA/DLSS setups where the optic-camera display jitters
 - Included vanilla scope layout presets
-- Per-scope layout file with `OffsetX`, `OffsetY`, and `Scale`
+- Per-scope user layout overrides with `OffsetX`, `OffsetY`, and `Scale`
 - In-game layout editor with live editing, save, reset, and copy scope key
 - Optional Wilcox RAPTAR ES requirement
 - Optional requirement for the attached RAPTAR to be switched on
 - RAPTAR-style `0123` or decimal `045.0` readout format
 - Configurable text color, text transparency, background color, and background transparency
 - Optional background plate behind the readout
-- Optional optic-camera anti-aliasing override to reduce TAA ghosting
+- Readout is drawn after the optic camera's anti-aliasing, so TAA cannot smear it
 - Fallback screen overlay mode for compatibility
 
 ## Requirements
@@ -34,15 +33,16 @@ The mod includes layout presets for vanilla scopes and an in-game layout editor 
 2. The folder should contain:
 
    - `maschine-ScopeRangefinder.dll`
+   - `ScopeRangefinder.presets.json`
    - `ScopeRangefinder.layouts.json`
 
 3. Start SPT.
 
 4. Check `BepInEx/LogOutput.log` for:
 
-   `maschine-ScopeRangefinder v1.1.0 loaded.`
+   `maschine-ScopeRangefinder v2.0.0 loaded.`
 
-If you update from 1.0.0 and still have `BepInEx/plugins/maschine-ScopeRangefinder.dll`, version 1.1.0 tries to remove that old file automatically. If Windows blocks removal, the mod shows a red conflict warning and stays inactive until the old DLL is removed manually.
+If you update from 1.0.0 and still have `BepInEx/plugins/maschine-ScopeRangefinder.dll`, version 2.0.0 tries to remove that old file automatically. If Windows blocks removal, the mod shows a red conflict warning and stays inactive until the old DLL is removed manually.
 
 ## Configuration
 
@@ -50,7 +50,11 @@ Main config file:
 
 `BepInEx/config/com.maschine.ScopeRangefinder.cfg`
 
-Scope layout file:
+Shipped scope preset file:
+
+`BepInEx/plugins/maschine-ScopeRangefinder/ScopeRangefinder.presets.json`
+
+User scope override file:
 
 `BepInEx/plugins/maschine-ScopeRangefinder/ScopeRangefinder.layouts.json`
 
@@ -69,26 +73,31 @@ The editor shows the current scope key and lets you adjust:
 Buttons:
 
 - `Save`: writes the current scope layout to `ScopeRangefinder.layouts.json`
-- `Reset`: removes the current scope-specific layout and falls back to global defaults
+- `Reset`: removes the current user override and falls back to shipped presets/global defaults
 - `Copy`: copies the current scope key to the clipboard
 - `Close`: hides the editor
 
 ## Layout JSON
 
-The layout file uses scope template IDs as keys:
+`ScopeRangefinder.presets.json` contains shipped presets and may be replaced by mod updates.
+`ScopeRangefinder.layouts.json` contains user overrides and is not overwritten by builds or updates.
+User overrides take priority over shipped presets.
+
+Both files use the same format and scope template IDs as keys:
 
 ```json
 {
+  "Version": 3,
   "Default": {
-    "OffsetX": null,
-    "OffsetY": null,
-    "Scale": null
+    "OffsetX": 0,
+    "OffsetY": 0,
+    "Scale": 0
   },
   "Scopes": {
     "example_scope_template_id": {
-      "OffsetX": -0.022,
-      "OffsetY": -0.014,
-      "Scale": 0.05
+      "OffsetX": 0,
+      "OffsetY": 0,
+      "Scale": 0
     }
   }
 }
@@ -96,11 +105,13 @@ The layout file uses scope template IDs as keys:
 
 Only these three values are used per scope:
 
-- `OffsetX`: horizontal placement inside the scope
-- `OffsetY`: vertical placement inside the scope
-- `Scale`: display size inside the scope
+- `OffsetX`: horizontal placement inside the scope, normalized to the scope canvas size
+- `OffsetY`: vertical placement inside the scope, normalized to the scope canvas size
+- `Scale`: size adjustment inside the scope. `0` means standard size
 
-The included JSON already contains presets for vanilla scopes.
+The included preset JSON contains vanilla scope keys with neutral default values.
+If either installed layout file has no `Version` field or an unsupported version,
+the mod replaces that file with current defaults on startup.
 
 ## Config Sections
 
@@ -131,23 +142,6 @@ When both RAPTAR options are enabled, the readout is shown whenever the attached
 | `UseDecimalFormat` | `false` | `false` = `0123`, `true` = `045.0` |
 | `NoDistanceText` | `----` | Text shown when no valid target is hit |
 
-### Scope Display
-
-| Key | Default | Description |
-| --- | --- | --- |
-| `ScopeRenderMode` | `ProjectedOverlay` | Selects the render path: `ProjectedOverlay`, `ExperimentalInScopeCamera`, or `LegacyOverlay`. Defaults to `LegacyOverlay` when PiP-Disabler is detected |
-| `ScopeLocalOffsetX` | `-0.022` | Global horizontal fallback offset |
-| `ScopeLocalOffsetY` | `-0.014` | Global vertical fallback offset |
-| `ScopeWorldScale` | `0.05` | Global fallback display scale |
-
-Per-scope JSON values override the global fallback offset and scale.
-
-Render modes:
-
-- `ProjectedOverlay`: recommended default without PiP-Disabler. Draws the readout as normal UI projected from the optic anchor.
-- `ExperimentalInScopeCamera`: renders into the optic camera. This can look more physically integrated, but may show TAA/DLSS artifacts.
-- `LegacyOverlay`: old fixed screen overlay.
-
 ### Scope Text
 
 | Key | Default | Description |
@@ -161,24 +155,9 @@ Render modes:
 | Key | Default | Description |
 | --- | --- | --- |
 | `ScopeWorldBackground` | `true` | Enables the background plate |
-| `ScopeWorldBackgroundWidth` | `0.28` | Background plate width |
-| `ScopeWorldBackgroundHeight` | `0.12` | Background plate height. This does not change text size |
+| `ScopeWorldBackgroundWidth` | `0.26` | Background plate width |
+| `ScopeWorldBackgroundHeight` | `0.11` | Background plate height. This does not change text size |
 | `ScopeWorldBackgroundColor` | dark green, semi-transparent | Background color and transparency |
-
-### Experimental InScopeCamera
-
-| Key | Default | Description |
-| --- | --- | --- |
-| `ScopeCompensateZoomScale` | `true` | Keeps the experimental optic-camera display size and offsets more consistent across variable zoom levels |
-| `ScopeAntialiasingOverride` | `Off` | Optional optic-camera anti-aliasing override for `ExperimentalInScopeCamera`. `FXAA` can reduce TAA ghosting on the scope readout |
-
-Available values:
-
-- `Off`
-- `FXAA`
-- `None`
-
-If you use `ExperimentalInScopeCamera` with TAA or DLSS and see trails on the readout while moving, try `FXAA`.
 
 ### Layout Editor
 
@@ -188,7 +167,7 @@ If you use `ExperimentalInScopeCamera` with TAA or DLSS and see trails on the re
 
 ### Legacy Screen Overlay
 
-These options only matter when `ScopeRenderMode = LegacyOverlay`.
+These options only matter when PiP-Disabler is installed and the mod automatically uses the fallback screen overlay.
 
 | Key | Default | Description |
 | --- | --- | --- |
@@ -200,11 +179,8 @@ These options only matter when `ScopeRenderMode = LegacyOverlay`.
 - Red dots, holographics, and iron sights are not affected.
 - The mod measures distance from the active optic camera direction.
 - The readout does not change weapon zeroing, ballistics, or point of impact.
-- With PiP-Disabler installed, `ProjectedOverlay` is disabled and the mod uses `LegacyOverlay`. `ExperimentalInScopeCamera` needs the vanilla optic camera and also falls back to `LegacyOverlay`.
+- With PiP-Disabler installed, the vanilla optic camera is unavailable while scoped, so the mod automatically uses the fallback screen overlay.
 
 ## Credits
 
 Built for SPT using BepInEx and Harmony.
-
-
-![options](https://github.com/maschine34675/ScopeRangefinder/blob/main/examplepictures/options.png?raw=true)

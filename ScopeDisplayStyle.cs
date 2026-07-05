@@ -17,9 +17,7 @@ namespace ScopeRangefinder
         {
             "Consolas",
             "Roboto",
-            "Bahnschrift Light Condensed",
-            "Bahnschrift Condensed",
-            "Arial Narrow",
+            "Bahnschrift",
             "Arial"
         };
 
@@ -66,6 +64,7 @@ namespace ScopeRangefinder
             text.color = new Color(0.18f, 0.98f, 0.22f, 0.96f);
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
             text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.resizeTextForBestFit = false;
         }
 
         public static RectTransform CreateDisplayPanel(Transform parent)
@@ -136,6 +135,8 @@ namespace ScopeRangefinder
             }
 
             var texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
             texture.SetPixel(0, 0, Color.white);
             texture.Apply(false, true);
             _whiteSprite = Sprite.Create(texture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f));

@@ -1,10 +1,10 @@
 ﻿using BepInEx;
-using System;
-using System.IO;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
+using System;
+using System.IO;
 using UnityEngine;
 
 namespace ScopeRangefinder
@@ -15,7 +15,7 @@ namespace ScopeRangefinder
     {
         public const string PluginGuid = "com.maschine.ScopeRangefinder";
         public const string PluginName = "maschine-ScopeRangefinder";
-        public const string PluginVersion = "1.1.0";
+        public const string PluginVersion = "2.0.0";
         public const string PiPDisablerGuid = "com.fiodor.pipdisabler";
 
         public static ManualLogSource LogSource;
@@ -30,19 +30,13 @@ namespace ScopeRangefinder
         public static ConfigEntry<float> DisplayOffsetX;
         public static ConfigEntry<float> DisplayOffsetY;
         public static ConfigEntry<float> DisplayShowDelay;
-        public static ConfigEntry<ScopeRenderMode> ScopeRenderMode;
-        public static ConfigEntry<float> ScopeLocalOffsetX;
-        public static ConfigEntry<float> ScopeLocalOffsetY;
-        public static ConfigEntry<float> ScopeWorldScale;
         public static ConfigEntry<Color> ScopeWorldTextColor;
         public static ConfigEntry<string> ScopeFontName;
         public static ConfigEntry<float> ScopeWorldTextOffsetY;
-        public static ConfigEntry<bool> ScopeCompensateZoomScale;
         public static ConfigEntry<bool> ScopeWorldBackground;
         public static ConfigEntry<float> ScopeWorldBackgroundWidth;
         public static ConfigEntry<float> ScopeWorldBackgroundHeight;
         public static ConfigEntry<Color> ScopeWorldBackgroundColor;
-        public static ConfigEntry<ScopeAntialiasingOverrideMode> ScopeAntialiasingOverride;
         public static ConfigEntry<KeyboardShortcut> LayoutEditorToggle;
         public static ConfigEntry<bool> RequireWilcoxRaptar;
         public static ConfigEntry<bool> RequireWilcoxRaptarActive;
@@ -61,9 +55,6 @@ namespace ScopeRangefinder
             }
 
             PiPDisablerLoaded = Chainloader.PluginInfos.ContainsKey(PiPDisablerGuid);
-            ScopeRenderMode defaultRenderMode = PiPDisablerLoaded
-                ? global::ScopeRangefinder.ScopeRenderMode.LegacyOverlay
-                : global::ScopeRangefinder.ScopeRenderMode.ProjectedOverlay;
 
             Enabled = Config.Bind("General", "Enabled", true,
                 "Show distance readout while aiming through an optic scope.");
@@ -81,16 +72,6 @@ namespace ScopeRangefinder
                 "Use 000.0 format (Vortex-style) instead of 4-digit meters (RAPTAR-style).");
             NoDistanceText = Config.Bind("Readout", "NoDistanceText", "----",
                 "Text shown when no valid target is hit.");
-            ScopeRenderMode = Config.Bind("Scope Display", "ScopeRenderMode", defaultRenderMode,
-                "ProjectedOverlay is recommended unless PiP-Disabler is installed. ExperimentalInScopeCamera renders into the optic camera. LegacyOverlay uses the old fixed screen overlay.");
-            ScopeLocalOffsetX = Config.Bind("Scope Display", "ScopeLocalOffsetX", -0.022f,
-                "Local scope-anchor offset in meters, right/left relative to the active optic transform.");
-            ScopeLocalOffsetY = Config.Bind("Scope Display", "ScopeLocalOffsetY", -0.014f,
-                "Local scope-anchor offset in meters, up/down relative to the active optic transform.");
-            ScopeWorldScale = Config.Bind("Scope Display", "ScopeWorldScale", 0.05f,
-                "Global scale for the scope-bound readout.");
-            ScopeCompensateZoomScale = Config.Bind("Experimental InScopeCamera", "ScopeCompensateZoomScale", true,
-                "ExperimentalInScopeCamera only: keep the readout roughly the same apparent size while the optic field of view changes.");
             ScopeWorldTextColor = Config.Bind("Scope Text", "ScopeWorldTextColor", new Color(0f, 1f, 0f, 1f),
                 "Color and transparency for the scope-bound text.");
             ScopeFontName = Config.Bind("Scope Text", "ScopeFontName", "Consolas",
@@ -104,31 +85,25 @@ namespace ScopeRangefinder
                     new AcceptableValueRange<float>(-0.1f, 0.1f)));
             ScopeWorldBackground = Config.Bind("Scope Background", "ScopeWorldBackground", true,
                 "Draw a small dark background plate behind the scope-bound readout.");
-            ScopeWorldBackgroundWidth = Config.Bind("Scope Background", "ScopeWorldBackgroundWidth", 0.28f,
+            ScopeWorldBackgroundWidth = Config.Bind("Scope Background", "ScopeWorldBackgroundWidth", 0.26f,
                 "Width of the optional scope-bound background plate.");
-            ScopeWorldBackgroundHeight = Config.Bind("Scope Background", "ScopeWorldBackgroundHeight", 0.12f,
+            ScopeWorldBackgroundHeight = Config.Bind("Scope Background", "ScopeWorldBackgroundHeight", 0.11f,
                 "Height of the optional scope-bound background plate.");
             ScopeWorldBackgroundColor = Config.Bind("Scope Background", "ScopeWorldBackgroundColor", new Color(0.03f, 0.10f, 0.03f, 0.35f),
                 "Color and transparency for the optional scope-bound background plate.");
-            ScopeAntialiasingOverride = Config.Bind(
-                "Experimental InScopeCamera",
-                "ScopeAntialiasingOverride",
-                ScopeAntialiasingOverrideMode.Off,
-                "ExperimentalInScopeCamera only: optional override for the optic camera. FXAA/None can reduce TAA ghosting, but DLSS may still ghost the final image.");
             LayoutEditorToggle = Config.Bind(
                 "Layout Editor",
                 "ToggleEditor",
                 new KeyboardShortcut(KeyCode.F8),
                 "Hotkey to show or hide the in-game scope layout editor.");
             DisplayOffsetX = Config.Bind("Legacy Screen Overlay", "OffsetX", 0f,
-                "LegacyOverlay only: horizontal offset in pixels.");
+                "Automatic PiP-Disabler fallback only: horizontal offset in pixels.");
             DisplayOffsetY = Config.Bind("Legacy Screen Overlay", "OffsetY", 0f,
-                "LegacyOverlay only: vertical offset in pixels.");
+                "Automatic PiP-Disabler fallback only: vertical offset in pixels.");
             RequireWilcoxRaptar = Config.Bind("Activation", "RequireWilcoxRaptar", false,
                 "Only show the readout when the current weapon has a Wilcox RAPTAR ES Tactical Rangefinder attached.");
             RequireWilcoxRaptarActive = Config.Bind("Activation", "RequireWilcoxRaptarActive", true,
                 "When RequireWilcoxRaptar is enabled, also require the attached RAPTAR tactical device to be switched on.");
-
             ScopeLayouts = ScopeLayoutConfig.LoadOrCreate();
             _harmony = new Harmony(PluginGuid);
             _harmony.PatchAll();
@@ -138,7 +113,7 @@ namespace ScopeRangefinder
             {
                 LogSource.LogWarning(
                     "PiP-Disabler detected. Vanilla optic camera is disabled while scoped; " +
-                    "ProjectedOverlay is disabled and ScopeRangefinder will use LegacyOverlay if needed.");
+                    "ScopeRangefinder will use the fallback screen overlay.");
             }
 
             LogSource.LogInfo($"{PluginName} v{PluginVersion} loaded.");
@@ -210,7 +185,7 @@ namespace ScopeRangefinder
             string path = Plugin.LegacyDllConflictPath ?? "BepInEx/plugins/maschine-ScopeRangefinder.dll";
             GUI.Label(
                 new Rect(Screen.width / 2f - width / 2f, 16f, width, height),
-                $"CONFLICT: remove old ScopeRangefinder DLL from {path} - v1.1.0 is inactive!",
+                $"CONFLICT: remove old ScopeRangefinder DLL from {path} - v{Plugin.PluginVersion} is inactive!",
                 _style);
         }
     }

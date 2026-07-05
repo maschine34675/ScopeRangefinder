@@ -2,6 +2,7 @@ using EFT;
 using EFT.Animations;
 using EFT.CameraControl;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 namespace ScopeRangefinder
@@ -12,33 +13,20 @@ namespace ScopeRangefinder
         private const float RayStartOffset = 0.1f;
         private const float PiPUnreliableHitDistance = 5f;
         private const float PiPCloseHitAgreement = 0.75f;
-        private const float ScopeScaleReferenceFov = 35f;
-        private const float ScopeDisplayDepth = 0.25f;
-        private const float ProjectedOverlayReferenceScale = 0.05f;
-        private const float ProjectedOverlayAnchorDistance = 100f;
-        private const float ProjectedOverlayOffsetMultiplier = 3.6f;
-        private const float ProjectedOverlayScaleMultiplier = 0.7f;
-        private const float ProjectedOverlayReferenceBackgroundWidth = 0.45f;
-        private const float ProjectedOverlayReferenceBackgroundHeight = 0.16f;
-        private const float ProjectedOverlayReferencePanelWidth = 142f;
-        private const float ProjectedOverlayReferencePanelHeight = 46f;
+        private const float ScopeCanvasDefaultUiScale = 0.7f;
+        private const float ScopeCanvasScaleSensitivity = 14f;
+        private const float ScopeCanvasMinUiScale = 0.25f;
+        private const float ScopeCanvasMaxUiScale = 4f;
         private const string WilcoxRaptarTemplateId = "61605d88ffa6e502ac5e7eeb";
 
         private Canvas _canvas;
+        private CanvasScaler _canvasScaler;
         private RectTransform _canvasRect;
         private RectTransform _panelRect;
         private Text _distanceText;
-        private Image[] _panelBackgroundImages;
-        private GameObject _worldRoot;
-        private GameObject _worldBackground;
-        private Material _worldBackgroundMaterial;
-        private Material _worldTextMaterial;
-        private TextMesh _worldDistanceText;
-        private Transform _worldParent;
         private Camera _activeScopeCamera;
         private OpticSight _activeOpticSight;
         private ProceduralWeaponAnimation _activeWeaponAnimation;
-        private bool _worldDisplayNeedsLateLayout;
         private string _currentLayoutKey;
         private string _lastLoggedLayoutKey;
         private float _timeSinceLastCast;
@@ -48,7 +36,13 @@ namespace ScopeRangefinder
         private float _scopedElapsedTime;
         private bool _usingMainCameraScope;
         private bool _raptarActivationOverride;
+        private bool _opticDisplayVisible;
         private static ScopeRangefinderComponent _activeInstance;
+        private string _appliedLayoutKey;
+        private float _appliedLayoutOffsetX = float.NaN;
+        private float _appliedLayoutOffsetY = float.NaN;
+        private float _appliedLayoutUiScale = float.NaN;
+        private Camera _configuredScopeCamera;
         private static readonly int RaycastMask =
             LayerMaskClass.HighPolyWithTerrainMask
             | LayerMaskClass.TransparentLayerMask
@@ -57,14 +51,14 @@ namespace ScopeRangefinder
         private void Awake()
         {
             _activeInstance = this;
-            Camera.onPreCull += HandleCameraPreCull;
             CreateOverlay();
             ResetAndHide();
         }
 
         private void OnDestroy()
         {
-            Camera.onPreCull -= HandleCameraPreCull;
+            DestroyReticleReadoutDisplay();
+            RestoreLayoutEditorCursor();
             if (_activeInstance == this)
             {
                 _activeInstance = null;
@@ -101,6 +95,7 @@ namespace ScopeRangefinder
                 _isScoped = true;
                 _scopedElapsedTime = 0f;
                 MeasureDistance(scopeCamera, weaponAnimation, player);
+                MarkDistanceTextDirty();
             }
             else
             {
@@ -112,150 +107,77 @@ namespace ScopeRangefinder
             {
                 _timeSinceLastCast = 0f;
                 MeasureDistance(scopeCamera, weaponAnimation, player);
+                MarkDistanceTextDirty();
             }
 
             if (_scopedElapsedTime < Plugin.DisplayShowDelay.Value || !ShouldShowReadout(weaponAnimation))
             {
-                _canvas.enabled = false;
-                SetWorldDisplayVisible(false);
+                HideOpticReadout();
                 return;
             }
 
-            ScopeRenderMode renderMode = GetEffectiveRenderMode();
-            if (!_usingMainCameraScope && renderMode == ScopeRenderMode.ExperimentalInScopeCamera)
+            if (!ShouldUseInScopeDisplay())
             {
-                _canvas.enabled = false;
-                if (!ApplyWorldDisplayLayout(scopeCamera, currentOpticSight, weaponAnimation))
-                {
-                    SetWorldDisplayVisible(false);
-                    return;
-                }
-
-                UpdateDistanceText(false, true);
-                SetWorldDisplayVisible(true);
-                _worldDisplayNeedsLateLayout = true;
-                return;
-            }
-
-            if (renderMode == ScopeRenderMode.ProjectedOverlay)
-            {
-                SetWorldDisplayVisible(false);
-                _worldDisplayNeedsLateLayout = false;
-                if (!ApplyProjectedOverlayLayout(scopeCamera, currentOpticSight, weaponAnimation))
+                HideReticleReadoutDisplay();
+                _opticDisplayVisible = false;
+                if (!ApplyDisplayLayout())
                 {
                     _canvas.enabled = false;
                     return;
                 }
 
                 _canvas.enabled = true;
-                UpdateDistanceText(true, false);
+                UpdateDistanceText();
                 return;
             }
 
-            SetWorldDisplayVisible(false);
-            _worldDisplayNeedsLateLayout = false;
-            if (!ApplyDisplayLayout())
-            {
-                _canvas.enabled = false;
-                return;
-            }
-
-            _canvas.enabled = true;
-            UpdateDistanceText(true, false);
-        }
-
-        internal static ScopeRenderMode GetEffectiveRenderMode()
-        {
-            ScopeRenderMode renderMode = Plugin.ScopeRenderMode.Value;
-            if (Plugin.PiPDisablerLoaded && renderMode == ScopeRenderMode.ProjectedOverlay)
-            {
-                return ScopeRenderMode.LegacyOverlay;
-            }
-
-            return renderMode;
-        }
-
-        internal static bool ShouldProcessExperimentalOpticCamera()
-        {
-            if (!Plugin.Enabled.Value
-                || GetEffectiveRenderMode() != ScopeRenderMode.ExperimentalInScopeCamera)
-            {
-                return false;
-            }
-
-            ScopeRangefinderComponent instance = _activeInstance;
-            return instance == null || !instance._usingMainCameraScope;
+            _opticDisplayVisible = true;
+            _canvas.enabled = false;
         }
 
         private void LateUpdate()
         {
-            if (!_worldDisplayNeedsLateLayout || _worldRoot == null || !_worldRoot.activeSelf)
+            if (!Plugin.Enabled.Value || !_opticDisplayVisible || !ShouldUseInScopeDisplay())
             {
                 return;
             }
 
-            if (!ApplyWorldDisplayLayout(_activeScopeCamera, _activeOpticSight, _activeWeaponAnimation))
+            Camera scopeCamera = _activeScopeCamera;
+            OpticSight currentOpticSight = _activeOpticSight;
+            ProceduralWeaponAnimation weaponAnimation = _activeWeaponAnimation;
+            if (scopeCamera == null || currentOpticSight == null || weaponAnimation == null)
             {
-                SetWorldDisplayVisible(false);
-                _worldDisplayNeedsLateLayout = false;
                 return;
             }
 
-            UpdateDistanceText(false, true);
+            SyncReticleCommandBufferDisplay(scopeCamera, currentOpticSight, weaponAnimation);
         }
 
-        internal static void AfterOpticCameraUpdated(Camera opticCamera)
+        private void HideOpticReadout()
         {
-            ScopeRangefinderComponent instance = _activeInstance;
-            if (instance == null
-                || opticCamera == null
-                || instance._usingMainCameraScope
-                || !instance._worldDisplayNeedsLateLayout
-                || instance._worldRoot == null
-                || !instance._worldRoot.activeSelf
-                || instance._activeScopeCamera != opticCamera)
-            {
-                return;
-            }
-
-            if (!instance.ApplyWorldDisplayLayout(
-                    instance._activeScopeCamera,
-                    instance._activeOpticSight,
-                    instance._activeWeaponAnimation))
-            {
-                instance.SetWorldDisplayVisible(false);
-                instance._worldDisplayNeedsLateLayout = false;
-                return;
-            }
-
-            instance.UpdateDistanceText(false, true);
+            _canvas.enabled = false;
+            _opticDisplayVisible = false;
+            HideReticleReadoutDisplay();
         }
 
-        private static void HandleCameraPreCull(Camera camera)
+        private static bool ShouldUseInScopeDisplay()
         {
-            ScopeRangefinderComponent instance = _activeInstance;
-            if (instance == null
-                || camera == null
-                || instance._usingMainCameraScope
-                || !instance._worldDisplayNeedsLateLayout
-                || instance._worldRoot == null
-                || !instance._worldRoot.activeSelf
-                || instance._activeScopeCamera != camera)
-            {
-                return;
-            }
+            return !Plugin.PiPDisablerLoaded && _activeInstance != null && !_activeInstance._usingMainCameraScope;
+        }
 
-            if (!instance.ApplyWorldDisplayLayout(
-                    instance._activeScopeCamera,
-                    instance._activeOpticSight,
-                    instance._activeWeaponAnimation))
-            {
-                instance.SetWorldDisplayVisible(false);
-                instance._worldDisplayNeedsLateLayout = false;
-                return;
-            }
+        internal static void PopulateReticleReadoutCommandBuffer(CommandBuffer buffer, Camera scopeCamera)
+        {
+            _activeInstance?.DrawReticleReadoutToBuffer(buffer, scopeCamera);
+        }
 
-            instance.UpdateDistanceText(false, true);
+        private void ResetAppliedLayoutState()
+        {
+            _appliedLayoutKey = null;
+            _appliedLayoutOffsetX = float.NaN;
+            _appliedLayoutOffsetY = float.NaN;
+            _appliedLayoutUiScale = float.NaN;
+            _lastRenderedDistanceText = null;
+            _distanceTextDirty = true;
         }
 
         private void ResetAndHide()
@@ -267,14 +189,15 @@ namespace ScopeRangefinder
             _activeOpticSight = null;
             _activeWeaponAnimation = null;
             _currentLayoutKey = null;
-            _worldDisplayNeedsLateLayout = false;
+            _opticDisplayVisible = false;
+            ResetAppliedLayoutState();
+            _configuredScopeCamera = null;
+            HideReticleReadoutDisplay();
 
             if (_canvas != null)
             {
                 _canvas.enabled = false;
             }
-
-            SetWorldDisplayVisible(false);
 
             _timeSinceLastCast = 0f;
             _lastRaycastHit = false;

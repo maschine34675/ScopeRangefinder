@@ -8,7 +8,7 @@
     <Company>https://github.com/maschine34675/ScopeRangefinder</Company>
     <AssemblyName>maschine-ScopeRangefinder</AssemblyName>
     <Copyright></Copyright>
-    <AssemblyVersion>1.1.0</AssemblyVersion>
+    <AssemblyVersion>2.0.0</AssemblyVersion>
     <FileVersion>$(AssemblyVersion)</FileVersion>
     <Configurations>Debug;Release;Package</Configurations>
     <Version>$(AssemblyVersion)</Version>
@@ -34,6 +34,10 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="ScopeRangefinderComponent.AutoZero.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="PhysicsModule">
@@ -96,6 +100,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\EscapeFromTarkov_Data\Managed\UnityEngine.UI.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>..\..\EscapeFromTarkov_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>..\..\EscapeFromTarkov_Data\Managed\UnityEngine.UIModule.dll</HintPath>
     </Reference>
@@ -104,6 +111,10 @@
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <MakeDir Directories="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder" />
+    <Copy
+      SourceFiles="$(ProjectDir)ScopeRangefinder.presets.json"
+      DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder"
+      Condition="Exists('$(ProjectDir)ScopeRangefinder.presets.json')" />
     <Copy
       SourceFiles="$(ProjectDir)ScopeRangefinder.layouts.json"
       DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder"
