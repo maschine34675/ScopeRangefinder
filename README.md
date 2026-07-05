@@ -8,16 +8,18 @@ The mod includes layout presets for vanilla scopes and an in-game layout editor 
 
 - Range readout while aiming through magnified optics
 - Scope-bound display that moves with the optic view
+- Works with all optic scopes, including thermal and night vision
 - Included vanilla scope layout presets
 - Per-scope user layout overrides with `OffsetX`, `OffsetY`, and `Scale`
 - In-game layout editor with live editing, save, reset, and copy scope key
 - Optional Wilcox RAPTAR ES requirement
 - Optional requirement for the attached RAPTAR to be switched on
 - RAPTAR-style `0123` or decimal `045.0` readout format
-- Configurable text color, text transparency, background color, and background transparency
+- Configurable text and background color, transparency, size, and font.
 - Optional background plate behind the readout
 - Readout is drawn after the optic camera's anti-aliasing, so TAA cannot smear it
-- Fallback screen overlay mode for compatibility
+- Fallback screen overlay mode for PiP-Disabler compatibility
+- Minimal performance impact (one raycast every 0.1 s while scoped)
 
 ## Requirements
 
