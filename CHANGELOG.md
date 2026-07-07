@@ -1,4 +1,23 @@
 # Changelog
+## 2.1.0
+
+### Added
+
+- Added auto zero (`AutoZeroEnabled`, off by default): zeroes the active optic to the measured distance, to the meter, with no distance limit, accounting for the loaded ammo and every other dynamic factor the game's own calibration uses. Two modes (`AutoZeroMode`):
+  - `Hotkey` (default): pressing `AutoZeroHotkey` (default `J`) zeroes once to the currently measured distance. The zero persists across unscoping until re-pressed, the zeroing dial is used manually, or the sight changes.
+  - `Continuous`: the optic follows the measured distance while aiming; the original zeroing is restored on unscope.
+- Added a smooth zeroing transition (`AutoZeroTransitionTime`, default `0.35`s): on larger distance jumps the view eases to the new zero instead of snapping. `0` restores the hard jump.
+- Added an optional predicted bullet trajectory preview (`ShowTrajectoryPreview`), a good way to build an intuitive feel for Tarkov's ballistics: bullet drop, travel time, and real dispersion at range. The line follows the measured distance and ends at the target, fading from a transparent near color to an opaque far color and widening with distance so the arc stays readable when viewed from behind the weapon.
+- Added a dispersion ring at the trajectory impact point (`AutoZeroImpactSpreadCircle`): shows the maximum shot spread at the measured distance using the game's own formula (weapon accuracy, barrel durability, ammo factor, buffs, overheat). The cone is projected onto the hit surface (a circle on flat walls, a stretched ellipse on oblique surfaces) and drawn with a permanent depth test, so it can never be swallowed by the surface it sits on.
+- Added AutoRanging compatibility: when the AutoRanging mod is installed, its ranging is automatically paused while `AutoZeroEnabled` is on, since the two mods would otherwise fight over the sight zeroing. AutoRanging keeps working normally whenever auto zero is off.
+- Verified compatibility with BetterZeroing and ExtendedZeroRanges. Auto zero makes all three of AutoRanging, BetterZeroing, and ExtendedZeroRanges unnecessary, since it already zeroes more precisely than any of them; all three remain compatible if kept installed. Auto zero no longer restores a stale backup when the game or a mod regenerates the sight calibration points (for example on ammo changes with BetterZeroing installed) — it re-reads the regenerated values instead.
+- The zeroing panel keeps the two auto zero modes visually distinct: continuous shows a static `auto` (no distance, since the in-scope readout already shows it live); hotkey shows just the applied distance, e.g. `412m`.
+
+### Changed
+
+- Settings menu (BepInEx ConfigurationManager) entries now show friendly names in a sensible order; the underlying `.cfg` keys are unchanged, so existing config files keep working.
+- Source files reorganized into `Patches/`, `Component/`, and `Config/` folders for readability. No behavior changes.
+
 ## 2.0.0
 
 ### Added
@@ -34,6 +53,7 @@
 
 - This release contains breaking config and layout changes, so it is versioned as `2.0.0`.
 - Existing user layout files from older versions are replaced if their layout version is missing or unsupported.
+- Config entries from older versions (for example the removed `Optic Camera Modes` section) may remain in existing config files. They are ignored and can be removed manually.
 
 ## 1.1.0
 

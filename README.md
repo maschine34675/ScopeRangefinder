@@ -1,6 +1,10 @@
 # maschine-ScopeRangefinder
 
+## Overview
+
 Adds a compact rangefinder readout to magnified optic scopes in SPT. The display is rendered inside the scope view, follows the optic while aiming, and can be adjusted per scope.
+
+Also adds auto zero: zero the optic to the measured distance, to the meter, with no distance limit, and accounting for the loaded ammo, weapon accuracy, and every other dynamic factor the game itself uses for calibration. No more picking the nearest fixed dial step.
 
 The mod includes layout presets for vanilla scopes and an in-game layout editor for fine tuning.
 
@@ -17,7 +21,9 @@ The mod includes layout presets for vanilla scopes and an in-game layout editor 
 - RAPTAR-style `0123` or decimal `045.0` readout format
 - Configurable text and background color, transparency, size, and font.
 - Optional background plate behind the readout
-- Readout is drawn after the optic camera's anti-aliasing, so TAA cannot smear it
+- Auto zero: precise, meter-accurate zeroing to the measured distance, per hotkey or continuously, instead of the nearest fixed dial step
+- Optional predicted bullet trajectory and impact dispersion ring, a great way to build a feel for Tarkov's ballistics
+- Makes BetterZeroing, ExtendedZeroRanges, and AutoRanging unnecessary; compatible with all three if installed anyway (see Notes)
 - Fallback screen overlay mode for PiP-Disabler compatibility
 - Minimal performance impact (one raycast every 0.1 s while scoped)
 
@@ -42,9 +48,9 @@ The mod includes layout presets for vanilla scopes and an in-game layout editor 
 
 4. Check `BepInEx/LogOutput.log` for:
 
-   `maschine-ScopeRangefinder v2.0.0 loaded.`
+   `maschine-ScopeRangefinder v2.1.0 loaded (build ...).`
 
-If you update from 1.0.0 and still have `BepInEx/plugins/maschine-ScopeRangefinder.dll`, version 2.0.0 tries to remove that old file automatically. If Windows blocks removal, the mod shows a red conflict warning and stays inactive until the old DLL is removed manually.
+If you update from 1.0.0 and still have `BepInEx/plugins/maschine-ScopeRangefinder.dll`, this version tries to remove that old file automatically. If Windows blocks removal, the mod shows a red conflict warning and stays inactive until the old DLL is removed manually.
 
 ## Configuration
 
@@ -161,6 +167,29 @@ When both RAPTAR options are enabled, the readout is shown whenever the attached
 | `ScopeWorldBackgroundHeight` | `0.11` | Background plate height. This does not change text size |
 | `ScopeWorldBackgroundColor` | dark green, semi-transparent | Background color and transparency |
 
+### Auto Zero
+
+Zeroes the active optic to the measured distance, to the meter, with no distance limit, instead of the nearest fixed dial step. Accounts for the loaded ammo and every other dynamic factor the game's own calibration uses. The original zeroing is restored whenever auto zero releases control, and using the zeroing dial manually always hands control back to the player.
+
+| Key | Default | Description |
+| --- | --- | --- |
+| `AutoZeroEnabled` | `false` | Master switch for auto zero |
+| `AutoZeroMode` | `Hotkey` | `Hotkey` zeroes once per key press and keeps that zero until re-pressed, the dial is used manually, or the sight changes. `Continuous` follows the measured distance while aiming |
+| `AutoZeroHotkey` | `J` | Zeroes the optic to the currently measured distance |
+| `AutoZeroTransitionTime` | `0.35` | Seconds to smoothly blend to a new zero instead of snapping. `0` = instant |
+| `ShowTrajectoryPreview` | `false` | Draw the predicted bullet trajectory up to the measured distance. A good way to learn Tarkov's ballistics: bullet drop, travel time, and real dispersion at range |
+| `AutoZeroTrajectoryNearColor` | green, nearly transparent | Trajectory color at the muzzle. Keep the alpha low so near segments do not block the view |
+| `AutoZeroTrajectoryFarColor` | amber, opaque | Trajectory color at the far end |
+| `AutoZeroImpactSpreadCircle` | `true` | Ring at the impact point showing the maximum shot dispersion (weapon accuracy, durability, ammo, buffs, overheat) |
+| `AutoZeroSpreadCircleColor` | red-orange | Color of the dispersion ring |
+
+Notes:
+
+- The zeroing panel stays clearly distinguishable between modes: continuous shows a static `auto` (no distance, since the in-scope readout already shows it live); hotkey shows just the applied distance, for example `412m`.
+- The trajectory ends at the measured target; the visible far end marks the predicted impact point.
+- Everything inside the dispersion ring can be hit; nothing outside of it. The ring uses the game's own spread formula.
+- BetterZeroing, ExtendedZeroRanges, and AutoRanging are no longer needed once you use auto zero, since it already zeroes more precisely and without the dial's distance limit. All three remain compatible if you keep them installed: BetterZeroing and ExtendedZeroRanges work fine alongside auto zero with no configuration, and AutoRanging is automatically paused while `AutoZeroEnabled` is on so the two mods do not fight over the zeroing (it works normally again whenever auto zero is off).
+
 ### Layout Editor
 
 | Key | Default | Description |
@@ -180,7 +209,7 @@ These options only matter when PiP-Disabler is installed and the mod automatical
 
 - Red dots, holographics, and iron sights are not affected.
 - The mod measures distance from the active optic camera direction.
-- The readout does not change weapon zeroing, ballistics, or point of impact.
+- The readout itself never changes weapon zeroing, ballistics, or point of impact; only enabling auto zero does, and only for the optic it's applied to.
 - With PiP-Disabler installed, the vanilla optic camera is unavailable while scoped, so the mod automatically uses the fallback screen overlay.
 
 ## Credits

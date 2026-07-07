@@ -20,7 +20,8 @@ namespace ScopeRangefinder
                     maxDistance,
                     weaponAnimation,
                     player,
-                    out _lastMeasuredDistance);
+                    out _lastMeasuredDistance,
+                    out _lastHitNormal);
                 return;
             }
 
@@ -32,6 +33,7 @@ namespace ScopeRangefinder
                 RaycastMask,
                 QueryTriggerInteraction.Ignore);
             _lastMeasuredDistance = _lastRaycastHit ? hit.distance : 0f;
+            _lastHitNormal = _lastRaycastHit ? hit.normal : Vector3.up;
         }
 
         private static bool TryMeasurePiPDistance(
@@ -40,9 +42,11 @@ namespace ScopeRangefinder
             float maxDistance,
             ProceduralWeaponAnimation weaponAnimation,
             Player player,
-            out float distance)
+            out float distance,
+            out Vector3 hitNormal)
         {
             distance = 0f;
+            hitNormal = Vector3.up;
 
             if (!TryRaycastSkippingSelfHits(
                     cameraOrigin,
@@ -58,6 +62,7 @@ namespace ScopeRangefinder
             if (cameraHit.distance >= PiPUnreliableHitDistance)
             {
                 distance = cameraHit.distance;
+                hitNormal = cameraHit.normal;
                 return true;
             }
 
@@ -76,12 +81,14 @@ namespace ScopeRangefinder
                     if (fireportHit.distance > cameraHit.distance + 0.25f)
                     {
                         distance = fireportHit.distance;
+                        hitNormal = fireportHit.normal;
                         return true;
                     }
 
                     if (Mathf.Abs(fireportHit.distance - cameraHit.distance) <= PiPCloseHitAgreement)
                     {
                         distance = cameraHit.distance;
+                        hitNormal = cameraHit.normal;
                         return true;
                     }
                 }

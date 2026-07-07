@@ -7,8 +7,6 @@ namespace ScopeRangefinder
 {
     internal partial class ScopeRangefinderComponent
     {
-        private const float LegacyScreenSpacePlaneDistance = 2f;
-
         private bool _distanceTextDirty = true;
         private string _lastRenderedDistanceText;
 

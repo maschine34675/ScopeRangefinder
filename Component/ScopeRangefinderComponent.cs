@@ -31,6 +31,7 @@ namespace ScopeRangefinder
         private string _lastLoggedLayoutKey;
         private float _timeSinceLastCast;
         private float _lastMeasuredDistance;
+        private Vector3 _lastHitNormal = Vector3.up;
         private bool _lastRaycastHit;
         private bool _isScoped;
         private float _scopedElapsedTime;
@@ -57,6 +58,8 @@ namespace ScopeRangefinder
 
         private void OnDestroy()
         {
+            RestoreAutoZero(_activeWeaponAnimation);
+            DestroyTrajectoryVisualization();
             DestroyReticleReadoutDisplay();
             RestoreLayoutEditorCursor();
             if (_activeInstance == this)
@@ -109,6 +112,8 @@ namespace ScopeRangefinder
                 MeasureDistance(scopeCamera, weaponAnimation, player);
                 MarkDistanceTextDirty();
             }
+
+            UpdateAutoZero(player, weaponAnimation);
 
             if (_scopedElapsedTime < Plugin.DisplayShowDelay.Value || !ShouldShowReadout(weaponAnimation))
             {
@@ -182,6 +187,12 @@ namespace ScopeRangefinder
 
         private void ResetAndHide()
         {
+            if (Plugin.AutoZeroMode == null || Plugin.AutoZeroMode.Value == AutoZeroMode.Continuous)
+            {
+                RestoreAutoZero(_activeWeaponAnimation);
+            }
+
+            SetTrajectoryPreviewVisible(false);
             _isScoped = false;
             _scopedElapsedTime = 0f;
             _usingMainCameraScope = false;

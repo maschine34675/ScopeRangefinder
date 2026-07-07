@@ -7,6 +7,7 @@ namespace ScopeRangefinder
 {
     internal partial class ScopeRangefinderComponent
     {
+        private const float ReadoutPlaneDistance = 2f;
         private const float ReadoutZoomReferenceDepth = 0.25f;
         private const float ReadoutScaleReferenceFov = 35f;
         private const float ReadoutBaseCharacterSize = 0.013333f;
@@ -125,7 +126,7 @@ namespace ScopeRangefinder
 
         private void UpdateReticleReadoutViewPose(Camera scopeCamera)
         {
-            float depth = ResolveReticleReadoutDepth(_activeOpticSight, scopeCamera);
+            float depth = ResolveReticleReadoutDepth(scopeCamera);
             float zoomCompensation = CalculateReadoutZoomCompensation(scopeCamera, depth);
             float halfFovRadians = scopeCamera.fieldOfView * 0.5f * Mathf.Deg2Rad;
             float halfHeight = depth * Mathf.Tan(halfFovRadians);
@@ -257,9 +258,9 @@ namespace ScopeRangefinder
             DisableRegularMeshRenderer(_reticleBackgroundRenderer);
         }
 
-        private static float ResolveReticleReadoutDepth(OpticSight currentOpticSight, Camera scopeCamera)
+        private static float ResolveReticleReadoutDepth(Camera scopeCamera)
         {
-            return Mathf.Max(scopeCamera.nearClipPlane + 0.05f, LegacyScreenSpacePlaneDistance);
+            return Mathf.Max(scopeCamera.nearClipPlane + 0.05f, ReadoutPlaneDistance);
         }
 
         private static float CalculateReadoutZoomCompensation(Camera displayCamera, float depth)
