@@ -23,7 +23,7 @@ The mod includes layout presets for vanilla scopes and an in-game layout editor 
 - Optional zeroing line: a second readout row showing the currently effective zero (`RNG`/`ZRO` prefixes configurable); the game's corner zeroing panel stays hidden while it is visible
 - Style presets: shipped looks applied with one click, own looks saved and managed from the settings menu
 - Renders with the game's own Bender font (the RAPTAR display font) by default; system and custom fonts selectable
-- Ships a curated set of display fonts (7-/14-segment, cockpit, tactical/HUD, terminal, and mono; SIL Open Font License), selectable from a font picker with live preview in the settings menu
+- Ships a curated set of display fonts (7-/14-/16-segment, cockpit, tactical/HUD, VCR, terminal, and mono; licensed under SIL OFL 1.1 or CC0 1.0), selectable from a font picker with live preview in the settings menu
 - Crisp SDF text at any magnification with adjustable thickness, spacing, and a layered soft glow
 - All characters are rendered monospaced, so the readout width never wobbles while digits change
 - Configurable text and background color, transparency, and size
@@ -147,7 +147,7 @@ Two sources, mirroring the layout files:
 - Shipped presets live in the `Styles` section of the read-only `ScopeRangefinder.presets.json` and are replaced by updates — never edit them there; apply one, tweak it, and save it under an own name instead. Shipped names are reserved.
 - Own presets all live in `ScopeRangefinder.styles.json`, which updates never touch.
 
-Shipped presets: `RAPTAR EFT Style` and `RAPTAR EFT Style 2` (vanilla-inspired looks with the game font), `RAPTAR Lite ES` and `RAPTAR S` (rangefinder hardware looks), `LED Display Coral Red` (segment display, the update showcase), `Home Video Optical Split` (near-white VCR lettering with restrained red/cyan lens dispersion), `DSEG Mini RGB Split`, `DSEG Modern Amber`, and `LCD14 Starburst Red` (segment displays), `B612 Cockpit Phosphor`, `Quantico Tactical Amber`, `Oxanium HUD Cyan`, and `Rajdhani Tech Chartreuse` (HUD looks), `Terminal Green` (VT323), and `Tech Mono Ice` (Share Tech Mono, decimal format).
+Shipped presets: `RAPTAR EFT Style` (vanilla-inspired game-font look); `RAPTAR Lite ES` and `RAPTAR S` (rangefinder hardware looks); `LED Display Coral Red`, `DSEG7 Mini RGB Split`, `DSEG14 Classic Amber`, `DT16 Cyrillic`, and `LCD14 Starburst Red` (segment displays); `VCR Chromatic` (VCR OSD with restrained red/cyan lens dispersion); `B612 Cockpit Phosphor`, `Quantico Tactical Amber`, `Oxanium HUD Cyan`, and `Rajdhani Tech Chartreuse` (cockpit/HUD looks); `Terminal Green` (VT323); and `Tech Mono Ice` (Share Tech Mono, decimal format).
 
 Preset values use the same format as the `.cfg` file, keyed by `Section.Key`:
 
@@ -221,11 +221,11 @@ The section starts with a live preview: the readout rendered with the current fo
 | `CustomFontFile` | (empty) | For `CustomFont`: dropdown listing the files in `BepInEx/plugins/maschine-ScopeRangefinder/fonts/`, or type a `.ttf`/`.otf`/bundle name manually (`file:assetname` selects one of several). Picking a file switches the font source automatically |
 | `ScopeWorldTextOffsetY` | `0.004` | Vertical text offset inside the background plate |
 
-Bundled fonts (SIL Open Font License, family license files included):
+Bundled fonts (SIL OFL 1.1 or CC0 1.0; matching license and archive-information files included):
 
-- Segment displays: `DSEG7Classic-Regular.ttf`, `DSEG14Classic-Regular.ttf`, `DSEG14Modern-Bold.ttf`, and `LCD14Condensed.otf`
-- Cockpit/tactical/HUD: `B612Mono-Bold.ttf`, `Quantico-Regular.ttf`, `Oxanium-Medium.ttf`, and `Rajdhani-SemiBold.ttf`
-- Terminal/mono: `ShareTechMono-Regular.ttf` and `VT323-Regular.ttf`
+- Segment displays: `DigitTech7-Italic.otf`, `DigitTech14-Italic.otf`, `DigitTech16-Regular.otf`, `DSEG7ClassicMini-Italic.ttf`, `DSEG14ClassicMini-Regular.ttf`, and `LCD14Condensed.otf`
+- Cockpit/tactical/HUD: `B612Mono-Regular.ttf`, `Quantico-Regular.ttf`, `Oxanium-Medium.ttf`, and `Rajdhani-Regular.ttf`
+- VCR/terminal/mono: `vcr-osd-replayed.ttf`, `HomeVideo-Regular.ttf`, `ShareTechMono-Regular.ttf`, and `VT323-Regular.ttf`
 
 Exact upstream versions, checksums, and matching color palettes are documented in [`fonts/FONT-SOURCES.md`](fonts/FONT-SOURCES.md). Drop additional `.ttf`/`.otf` files or TMP font asset bundles into the same folder.
 
