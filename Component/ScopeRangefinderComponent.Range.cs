@@ -69,6 +69,22 @@ namespace ScopeRangefinder
             Transform fireport = weaponAnimation?.HandsContainer?.Fireport;
             if (fireport != null)
             {
+                Vector3 toCameraHit = cameraHit.point - fireport.position;
+                float toCameraHitDistance = toCameraHit.magnitude;
+                if (toCameraHitDistance > 0.05f
+                    && (!TryRaycastSkippingSelfHits(
+                            fireport.position,
+                            toCameraHit / toCameraHitDistance,
+                            toCameraHitDistance - 0.05f,
+                            weaponAnimation,
+                            player,
+                            out RaycastHit occluderHit)
+                        || occluderHit.distance >= toCameraHitDistance - 0.1f))
+                {
+                    distance = cameraHit.distance;
+                    hitNormal = cameraHit.normal;
+                    return true;
+                }
                 Vector3 fireportOrigin = fireport.position + aimDirection * RayStartOffset;
                 if (TryRaycastSkippingSelfHits(
                         fireportOrigin,

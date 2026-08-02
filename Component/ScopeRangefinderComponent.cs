@@ -61,6 +61,7 @@ namespace ScopeRangefinder
             RestoreAutoZero(_activeWeaponAnimation);
             DestroyTrajectoryVisualization();
             DestroyReticleReadoutDisplay();
+            DestroyFontPreview();
             RestoreLayoutEditorCursor();
             if (_activeInstance == this)
             {
@@ -71,9 +72,11 @@ namespace ScopeRangefinder
         private void Update()
         {
             HandleLayoutEditorHotkey();
+            UpdateFontPreview();
 
             if (!Plugin.Enabled.Value)
             {
+                RestoreAutoZero(_activeWeaponAnimation);
                 ResetAndHide();
                 return;
             }
@@ -99,6 +102,7 @@ namespace ScopeRangefinder
                 _scopedElapsedTime = 0f;
                 MeasureDistance(scopeCamera, weaponAnimation, player);
                 MarkDistanceTextDirty();
+                LogFontInventoryOnce();
             }
             else
             {

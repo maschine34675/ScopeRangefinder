@@ -12,7 +12,6 @@ namespace ScopeRangefinder
         private const float AutoZeroTrajectoryMaxTime = 6f;
         private const float AutoZeroLineWidth = 0.015f;
         private const float AutoZeroWidthPerMeter = 0.0005f;
-
         private const float AutoZeroSnapSqrDistance = 4e-6f;
 
         private SightComponent _autoZeroSight;
@@ -139,7 +138,6 @@ namespace ScopeRangefinder
             bool hasMeasurement)
         {
             bool applied = _autoZeroSight == sight && _autoZeroScopeIndex == scopeIndex;
-
             if (applied && pointIndex != _autoZeroPointIndex)
             {
                 RestoreAutoZero(weaponAnimation);
@@ -151,7 +149,6 @@ namespace ScopeRangefinder
                 && TryCalculateCalibrationPoint(weapon, ammo, distance, out Vector3 calibrationPoint))
             {
                 EnsureAutoZeroBackup(sight, scopeIndex, points);
-
                 if (!_autoZeroPointInitialized)
                 {
                     _autoZeroAppliedPoint = points[pointIndex];
@@ -163,7 +160,7 @@ namespace ScopeRangefinder
                 _autoZeroLastDistance = distance;
                 _autoZeroLastAmmo = ammo;
                 _autoZeroPointIndex = pointIndex;
-                player.ShowAmmoCountZeroingPanel($"{distance}m");
+                player.ShowAmmoCountZeroingPanel(FormatPanelDistance(distance));
                 applied = true;
             }
 
@@ -174,7 +171,6 @@ namespace ScopeRangefinder
 
             ApplyCalibrationPointStep(sight, scopeIndex, points, pointIndex, weaponAnimation);
         }
-
         private void ApplyCalibrationPointStep(
             SightComponent sight,
             int scopeIndex,
@@ -246,6 +242,16 @@ namespace ScopeRangefinder
 
             pointIndex = sight.method_0(scopeIndex);
             return pointIndex >= 0 && pointIndex < points.Length;
+        }
+        private bool IsAutoZeroEffective(SightComponent sight)
+        {
+            return sight != null
+                && _autoZeroSight == sight
+                && _autoZeroScopeIndex >= 0
+                && sight.SelectedScopeIndex == _autoZeroScopeIndex
+                && sight.OpticCalibrationPoints != null
+                && _autoZeroScopeIndex < sight.OpticCalibrationPoints.Length
+                && ReferenceEquals(sight.OpticCalibrationPoints[_autoZeroScopeIndex], _autoZeroLiveArray);
         }
 
         private void EnsureAutoZeroBackup(SightComponent sight, int scopeIndex, Vector3[] points)
@@ -324,14 +330,22 @@ namespace ScopeRangefinder
                 weaponAnimation?.method_2();
             }
         }
-
+        internal static bool ShouldSuppressZeroingPanel()
+        {
+            ScopeRangefinderComponent instance = _activeInstance;
+            return instance != null
+                && Plugin.Enabled.Value
+                && Plugin.ShowZeroLine.Value
+                && instance._opticDisplayVisible;
+        }
         internal static bool TryGetZeroingPanelText(out string panelText)
         {
             panelText = null;
             ScopeRangefinderComponent instance = _activeInstance;
             if (instance == null
                 || !Plugin.AutoZeroEnabled.Value
-                || instance._autoZeroSight == null)
+                || instance._autoZeroSight == null
+                || instance._activeWeaponAnimation?.CurrentAimingMod != instance._autoZeroSight)
             {
                 return false;
             }
@@ -347,7 +361,7 @@ namespace ScopeRangefinder
                 return false;
             }
 
-            panelText = $"{instance._autoZeroLastDistance}m";
+            panelText = FormatPanelDistance(instance._autoZeroLastDistance);
             return true;
         }
 
@@ -370,7 +384,8 @@ namespace ScopeRangefinder
                 return;
             }
 
-            int pointCount = BuildTrajectoryPoints(fireport, ammo, weapon.SpeedFactor, targetDistance, out float arcLength);
+            int pointCount = BuildTrajectoryPoints(
+                fireport, ammo, weapon.SpeedFactor, targetDistance, out float arcLength, out bool reachedTarget);
             if (pointCount < 2)
             {
                 SetTrajectoryPreviewVisible(false);
@@ -383,14 +398,20 @@ namespace ScopeRangefinder
             _autoZeroTrajectoryLine.SetPositions(_autoZeroTrajectoryBuffer);
             _autoZeroTrajectoryLine.enabled = true;
 
-            UpdateSpreadCircle(
-                weapon,
-                ammo,
-                fireport.position,
-                _autoZeroTrajectoryBuffer[pointCount - 1],
-                targetDistance);
+            if (reachedTarget)
+            {
+                UpdateSpreadCircle(
+                    weapon,
+                    ammo,
+                    fireport.position,
+                    _autoZeroTrajectoryBuffer[pointCount - 1],
+                    targetDistance);
+            }
+            else
+            {
+                SetSpreadCircleVisible(false);
+            }
         }
-
         private void UpdateSpreadCircle(
             Weapon weapon,
             AmmoTemplate ammo,
@@ -403,7 +424,6 @@ namespace ScopeRangefinder
                 SetSpreadCircleVisible(false);
                 return;
             }
-
             float spreadTangent = CalculateCenterOfImpactAt100m(weapon, ammo) / 100f;
             if (spreadTangent * targetDistance <= 0.002f)
             {
@@ -431,7 +451,6 @@ namespace ScopeRangefinder
 
             EnsureSpreadCircle();
             ApplySpreadCircleStyle(targetDistance, spreadTangent * impactDistance);
-
             Vector3 surfaceNormal = _lastHitNormal;
             bool projectOntoSurface = Mathf.Abs(Vector3.Dot(axis, surfaceNormal)) > 0.005f;
             float planeDistance = Vector3.Dot(impactPoint - muzzlePosition, surfaceNormal);
@@ -547,9 +566,11 @@ namespace ScopeRangefinder
             AmmoTemplate ammo,
             float speedFactor,
             int targetDistance,
-            out float arcLength)
+            out float arcLength,
+            out bool reachedTarget)
         {
             arcLength = 0f;
+            reachedTarget = false;
             int maxPoints = Mathf.FloorToInt(AutoZeroTrajectoryMaxTime / AutoZeroTrajectoryStep) + 1;
             if (_autoZeroTrajectoryBuffer == null || _autoZeroTrajectoryBuffer.Length < maxPoints)
             {
@@ -573,6 +594,7 @@ namespace ScopeRangefinder
                     ammo.BallisticCoeficient,
                     out trajectoryInfo);
 
+                float previousMagnitude = 0f;
                 for (int i = 0; i < maxPoints; i++)
                 {
                     EftBulletClass.PredictedTrajectoryCalculation(
@@ -582,17 +604,35 @@ namespace ScopeRangefinder
                         i * AutoZeroTrajectoryStep);
                     Vector3 worldPoint = fireport.position + fireport.TransformDirection(localToFireport * localPosition);
                     _autoZeroTrajectoryBuffer[pointCount] = worldPoint;
+                    float segmentLength = 0f;
                     if (pointCount > 0)
                     {
-                        arcLength += Vector3.Distance(_autoZeroTrajectoryBuffer[pointCount - 1], worldPoint);
+                        segmentLength = Vector3.Distance(_autoZeroTrajectoryBuffer[pointCount - 1], worldPoint);
+                        arcLength += segmentLength;
                     }
 
                     pointCount++;
-
-                    if (localPosition.magnitude >= targetDistance)
+                    float magnitude = localPosition.magnitude;
+                    if (magnitude >= targetDistance)
                     {
+                        reachedTarget = true;
+                        if (pointCount > 1 && magnitude > previousMagnitude)
+                        {
+                            float t = Mathf.Clamp01(
+                                (targetDistance - previousMagnitude) / (magnitude - previousMagnitude));
+                            Vector3 interpolated = Vector3.Lerp(
+                                _autoZeroTrajectoryBuffer[pointCount - 2],
+                                _autoZeroTrajectoryBuffer[pointCount - 1],
+                                t);
+                            arcLength -= segmentLength;
+                            arcLength += Vector3.Distance(_autoZeroTrajectoryBuffer[pointCount - 2], interpolated);
+                            _autoZeroTrajectoryBuffer[pointCount - 1] = interpolated;
+                        }
+
                         break;
                     }
+
+                    previousMagnitude = magnitude;
                 }
             }
             finally
@@ -638,7 +678,6 @@ namespace ScopeRangefinder
             _autoZeroAppliedNearColor = nearColor;
             _autoZeroAppliedFarColor = farColor;
             _autoZeroAppliedTrajectoryLength = arcLength;
-
             var gradient = new Gradient();
             gradient.SetKeys(
                 new[]

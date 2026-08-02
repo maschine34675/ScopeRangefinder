@@ -34,10 +34,13 @@ namespace ScopeRangefinder
 
         private void OnDestroy()
         {
-            if (_commandBuffer != null && _camera != null)
+            if (_commandBuffer != null)
             {
-                _camera.RemoveCommandBuffer(ReadoutCameraEvent, _commandBuffer);
-                _commandBuffer.Clear();
+                if (_camera != null)
+                {
+                    _camera.RemoveCommandBuffer(ReadoutCameraEvent, _commandBuffer);
+                }
+                _commandBuffer.Release();
                 _commandBuffer = null;
             }
         }

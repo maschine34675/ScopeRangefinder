@@ -8,7 +8,7 @@
     <Company>https://github.com/maschine34675/ScopeRangefinder</Company>
     <AssemblyName>maschine-ScopeRangefinder</AssemblyName>
     <Copyright></Copyright>
-    <AssemblyVersion>2.1.0</AssemblyVersion>
+    <AssemblyVersion>2.3.0</AssemblyVersion>
     <FileVersion>$(AssemblyVersion)</FileVersion>
     <Configurations>Debug;Release;Package</Configurations>
     <Version>$(AssemblyVersion)</Version>
@@ -81,6 +81,9 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>..\..\EscapeFromTarkov_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.IMGUIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\EscapeFromTarkov_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
@@ -120,16 +123,52 @@
   </Target>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <ItemGroup>
+      <BundledFontFiles Include="$(ProjectDir)fonts\**\*" />
+    </ItemGroup>
     <MakeDir Directories="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder" />
+    <!-- The runtime marks the shipped preset file read-only, hence the overwrite flag. -->
     <Copy
       SourceFiles="$(ProjectDir)ScopeRangefinder.presets.json"
       DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder"
+      OverwriteReadOnlyFiles="true"
       Condition="Exists('$(ProjectDir)ScopeRangefinder.presets.json')" />
     <Copy
       SourceFiles="$(ProjectDir)ScopeRangefinder.layouts.json"
       DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder"
       Condition="Exists('$(ProjectDir)ScopeRangefinder.layouts.json') And !Exists('$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder\ScopeRangefinder.layouts.json')" />
+    <Copy
+      SourceFiles="@(BundledFontFiles)"
+      DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder\fonts" />
     <Delete Files="$(ProjectDir)..\..\BepInEx\plugins\$(TargetFileName)" />
+  </Target>
+
+  <!--
+    Release builds also produce the distributable zip next to the project:
+    maschine-ScopeRangefinder-<version>.zip with the BepInEx/plugins/... layout.
+    ScopeRangefinder.layouts.json is deliberately NOT packaged: it holds user
+    overrides and shipping it would overwrite them on update.
+  -->
+  <Target Name="CreateReleaseZip" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <PropertyGroup>
+      <PackageRoot>$(ProjectDir)obj\package\</PackageRoot>
+      <PackagePluginDir>$(PackageRoot)BepInEx\plugins\maschine-ScopeRangefinder\</PackagePluginDir>
+      <ReleaseZipPath>$(ProjectDir)maschine-ScopeRangefinder-$(AssemblyVersion).zip</ReleaseZipPath>
+    </PropertyGroup>
+    <Error
+      Condition="!Exists('$(ProjectDir)ScopeRangefinder.presets.json')"
+      Text="ScopeRangefinder.presets.json is missing; refusing to package an incomplete release." />
+    <ItemGroup>
+      <ReleaseFontFiles Include="$(ProjectDir)fonts\**\*" />
+    </ItemGroup>
+    <RemoveDir Directories="$(PackageRoot)" />
+    <MakeDir Directories="$(PackagePluginDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PackagePluginDir)" />
+    <Copy SourceFiles="$(ProjectDir)ScopeRangefinder.presets.json" DestinationFolder="$(PackagePluginDir)" />
+    <Copy SourceFiles="@(ReleaseFontFiles)" DestinationFolder="$(PackagePluginDir)fonts" />
+    <Delete Files="$(ReleaseZipPath)" />
+    <ZipDirectory SourceDirectory="$(PackageRoot)" DestinationFile="$(ReleaseZipPath)" />
+    <Message Importance="high" Text="Release package created: $(ReleaseZipPath)" />
   </Target>
 </Project>

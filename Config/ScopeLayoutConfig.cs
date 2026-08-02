@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -37,6 +38,7 @@ namespace ScopeRangefinder
                 PresetPath,
                 CreateDefaultPresetFile,
                 "preset");
+            MarkReadOnly(PresetPath);
             ScopeLayoutFile userLayouts = LoadOrReplace(
                 UserPath,
                 CreateEmptyUserFile,
@@ -103,7 +105,7 @@ namespace ScopeRangefinder
                 _userLayouts ??= CreateEmptyUserFile();
                 _userLayouts.Version = CurrentVersion;
                 Directory.CreateDirectory(Path.GetDirectoryName(UserPath));
-                File.WriteAllText(UserPath, JsonConvert.SerializeObject(_userLayouts, Formatting.Indented));
+                JsonFileSafety.WriteAtomic(UserPath, JsonConvert.SerializeObject(_userLayouts, Formatting.Indented));
                 return true;
             }
             catch (Exception ex)
@@ -191,6 +193,21 @@ namespace ScopeRangefinder
             }
         }
 
+        private static void MarkReadOnly(string path)
+        {
+            try
+            {
+                FileAttributes attributes = File.GetAttributes(path);
+                if ((attributes & FileAttributes.ReadOnly) == 0)
+                {
+                    File.SetAttributes(path, attributes | FileAttributes.ReadOnly);
+                }
+            }
+            catch
+            {
+            }
+        }
+
         private static ScopeLayoutFile CreateDefaultPresetFile()
         {
             return new ScopeLayoutFile
@@ -234,7 +251,25 @@ namespace ScopeRangefinder
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
-                File.WriteAllText(path, JsonConvert.SerializeObject(replacement, Formatting.Indented));
+                JObject output = JObject.FromObject(replacement);
+                if (File.Exists(path))
+                {
+                    try
+                    {
+                        JToken styles = JObject.Parse(File.ReadAllText(path))["Styles"];
+                        if (styles != null)
+                        {
+                            output["Styles"] = styles;
+                        }
+                    }
+                    catch
+                    {
+                    }
+                    JsonFileSafety.BackupBroken(path);
+                    File.SetAttributes(path, FileAttributes.Normal);
+                }
+
+                JsonFileSafety.WriteAtomic(path, output.ToString(Formatting.Indented));
                 Plugin.LogSource?.LogWarning(
                     $"Replaced ScopeRangefinder layout config '{path}' with version {CurrentVersion} defaults: {reason}.");
             }

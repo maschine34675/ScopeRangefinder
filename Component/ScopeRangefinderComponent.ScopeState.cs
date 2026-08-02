@@ -78,7 +78,6 @@ namespace ScopeRangefinder
                 currentOpticSight = activeOpticSight;
                 return true;
             }
-
             if (Plugin.PiPDisablerLoaded)
             {
                 Camera mainCamera = cameraClass.Camera;
@@ -100,7 +99,6 @@ namespace ScopeRangefinder
             {
                 return false;
             }
-
             if (player.PlayerBody == null || player.HandsController == null)
             {
                 return false;

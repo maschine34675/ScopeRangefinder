@@ -6,160 +6,507 @@
     "Scale": 0
   },
   "Scopes": {
-    "618ba27d9008e4636a67f61d": {
-      "OffsetX": -0.26,
-      "OffsetY": -0.24,
-      "Scale": 0.0325
-    },
-    "5a37cb10c4a282329a73b4e7": {
-      "OffsetX": -0.254,
-      "OffsetY": -0.278,
-      "Scale": 0.05
-    },
-    "617151c1d92c473c770214ab": {
-      "OffsetX": -0.23,
-      "OffsetY": -0.242,
-      "Scale": 0.03
-    },
-    "5b3b99475acfc432ff4dcbee": {
-      "OffsetX": -0.274,
-      "OffsetY": -0.252,
-      "Scale": 0.04
-    },
-    "6567e7681265c8a131069b0f": {
-      "OffsetX": -0.22,
-      "OffsetY": -0.24,
-      "Scale": 0.025
-    },
-    "5b2388675acfc4771e1be0be": {
-      "OffsetX": -0.314,
-      "OffsetY": -0.262,
-      "Scale": 0.0425
-    },
-    "57c5ac0824597754771e88a9": {
-      "OffsetX": -0.236,
-      "OffsetY": -0.314,
-      "Scale": 0.05
-    },
-    "676175789dcee773150c6925": {
-      "OffsetX": -0.26,
-      "OffsetY": -0.276,
-      "Scale": 0.05
-    },
-    "5dfe6104585a0c3e995c7b82": {
-      "OffsetX": -0.294,
-      "OffsetY": -0.264,
-      "Scale": 0.04
-    },
-    "62850c28da09541f43158cca": {
-      "OffsetX": -0.332,
-      "OffsetY": -0.26,
-      "Scale": 0.05
-    },
-    "5c0517910db83400232ffee5": {
-      "OffsetX": -0.26,
-      "OffsetY": -0.296,
-      "Scale": 0.045
-    },
-    "61714eec290d254f5e6b2ffc": {
-      "OffsetX": -0.24,
-      "OffsetY": -0.26,
-      "Scale": 0.03
-    },
-    "626bb8532c923541184624b4": {
-      "OffsetX": -0.24,
-      "OffsetY": -0.242,
-      "Scale": 0.025
-    },
     "5aa66be6e5b5b0214e506e97": {
-      "OffsetX": -0.256,
-      "OffsetY": -0.242,
+      "OffsetX": -0.196,
+      "OffsetY": -0.254,
       "Scale": 0.035
     },
-    "57adff4f24597737f373b6e6": {
-      "OffsetX": -0.3,
-      "OffsetY": -0.3,
-      "Scale": 0.03
+    "676175789dcee773150c6925": {
+      "OffsetX": -0.21,
+      "OffsetY": -0.27,
+      "Scale": 0.05
     },
     "56ea70acd2720b844b8b4594": {
-      "OffsetX": -0.24,
+      "OffsetX": -0.2,
       "OffsetY": -0.286,
       "Scale": 0.04
     },
-    "5d2dc3e548f035404a1a4798": {
-      "OffsetX": -0.24,
-      "OffsetY": -0.228,
-      "Scale": 0.025
+    "62850c28da09541f43158cca": {
+      "OffsetX": -0.242,
+      "OffsetY": -0.294,
+      "Scale": 0.05
+    },
+    "5b3b99475acfc432ff4dcbee": {
+      "OffsetX": -0.21,
+      "OffsetY": -0.264,
+      "Scale": 0.04
+    },
+    "61714eec290d254f5e6b2ffc": {
+      "OffsetX": -0.202,
+      "OffsetY": -0.26,
+      "Scale": 0.03
+    },
+    "5a37cb10c4a282329a73b4e7": {
+      "OffsetX": -0.208,
+      "OffsetY": -0.278,
+      "Scale": 0.05
+    },
+    "5c0517910db83400232ffee5": {
+      "OffsetX": -0.21,
+      "OffsetY": -0.296,
+      "Scale": 0.045
+    },
+    "618ba27d9008e4636a67f61d": {
+      "OffsetX": -0.22,
+      "OffsetY": -0.24,
+      "Scale": 0.0325
     },
     "57ac965c24597706be5f975c": {
-      "OffsetX": -0.326,
-      "OffsetY": -0.228,
-      "Scale": 0.025
-    },
-    "544a3a774bdc2d3a388b4567": {
-      "OffsetX": -0.26,
-      "OffsetY": -0.32,
+      "OffsetX": -0.138,
+      "OffsetY": -0.286,
       "Scale": 0.025
     },
     "57aca93d2459771f2c7e26db": {
-      "OffsetX": -0.32,
-      "OffsetY": -0.22,
+      "OffsetX": -0.138,
+      "OffsetY": -0.286,
       "Scale": 0.025
     },
-    "5c1cdd512e22161b267d91ae": {
+    "5b2388675acfc4771e1be0be": {
+      "OffsetX": -0.274,
+      "OffsetY": -0.262,
+      "Scale": 0.0425
+    },
+    "544a3a774bdc2d3a388b4567": {
+      "OffsetX": -0.22,
+      "OffsetY": -0.32,
+      "Scale": 0.025
+    },
+    "57c5ac0824597754771e88a9": {
+      "OffsetX": -0.196,
+      "OffsetY": -0.314,
+      "Scale": 0.05
+    },
+    "57adff4f24597737f373b6e6": {
+      "OffsetX": -0.244,
+      "OffsetY": -0.306,
+      "Scale": 0.03
+    },
+    "6567e7681265c8a131069b0f": {
+      "OffsetX": -0.168,
+      "OffsetY": -0.246,
+      "Scale": 0.025
+    },
+    "5dfe6104585a0c3e995c7b82": {
+      "OffsetX": -0.254,
+      "OffsetY": -0.264,
+      "Scale": 0.04
+    },
+    "617151c1d92c473c770214ab": {
+      "OffsetX": -0.094,
+      "OffsetY": -0.298,
+      "Scale": 0.03
+    },
+    "5d2dc3e548f035404a1a4798": {
+      "OffsetX": -0.2,
+      "OffsetY": -0.228,
+      "Scale": 0.025
+    },
+    "5c07dd120db834001c39092d": {
+      "OffsetX": -0.22,
+      "OffsetY": -0.26,
+      "Scale": 0.025
+    },
+    "5c0a2cec0db834001b7ce47d": {
+      "OffsetX": -0.22,
+      "OffsetY": -0.26,
+      "Scale": 0.025
+    },
+    "5d1b5e94d7ad1a2b865a96b0": {
+      "OffsetX": -0.33,
+      "OffsetY": -0.232,
+      "Scale": 0.075
+    },
+    "5b3b6e495acfc4330140bd88": {
+      "OffsetX": -0.22,
+      "OffsetY": -0.28,
+      "Scale": 0.03
+    },
+    "67641b461c2eb66ade05dba6": {
+      "OffsetX": -0.35,
+      "OffsetY": -0.224,
+      "Scale": 0.0625
+    },
+    "63fc44e2429a8a166c7f61e6": {
+      "OffsetX": -0.322,
+      "OffsetY": -0.28,
+      "Scale": 0.07
+    },
+    "5c05293e0db83400232fff80": {
+      "OffsetX": -0.26,
+      "OffsetY": -0.3,
+      "Scale": 0.025
+    },
+    "5c052a900db834001a66acbd": {
       "OffsetX": -0.3,
       "OffsetY": -0.26,
       "Scale": 0.025
     },
     "59db7e1086f77448be30ddf3": {
-      "OffsetX": -0.3,
-      "OffsetY": -0.28,
-      "Scale": 0.025
-    },
-    "5c05293e0db83400232fff80": {
-      "OffsetX": -0.28,
-      "OffsetY": -0.3,
-      "Scale": 0.025
-    },
-    "5c052a900db834001a66acbd": {
-      "OffsetX": -0.32,
-      "OffsetY": -0.26,
-      "Scale": 0.025
-    },
-    "5c0a2cec0db834001b7ce47d": {
-      "OffsetX": -0.26,
-      "OffsetY": -0.26,
-      "Scale": 0.025
-    },
-    "5c07dd120db834001c39092d": {
-      "OffsetX": -0.26,
-      "OffsetY": -0.26,
-      "Scale": 0.025
-    },
-    "5d1b5e94d7ad1a2b865a96b0": {
-      "OffsetX": -0.38,
-      "OffsetY": -0.24,
-      "Scale": 0.1
-    },
-    "5b3b6e495acfc4330140bd88": {
       "OffsetX": -0.26,
       "OffsetY": -0.28,
-      "Scale": 0.03
+      "Scale": 0.025
     },
-    "63fc44e2429a8a166c7f61e6": {
-      "OffsetX": -0.342,
-      "OffsetY": -0.272,
-      "Scale": 0.12
-    },
-    "67641b461c2eb66ade05dba6": {
-      "OffsetX": -0.37,
-      "OffsetY": -0.222,
-      "Scale": 0.1125
+    "5c1cdd512e22161b267d91ae": {
+      "OffsetX": -0.26,
+      "OffsetY": -0.26,
+      "Scale": 0.025
     },
     "5a1eaa87fcdbcb001865f75e": {
-      "OffsetX": -0.376,
-      "OffsetY": -0.24,
-      "Scale": 0.1
+      "OffsetX": -0.35,
+      "OffsetY": -0.228,
+      "Scale": 0.05
+    },
+    "626bb8532c923541184624b4": {
+      "OffsetX": -0.206,
+      "OffsetY": -0.242,
+      "Scale": 0.025
+    }
+  },
+  "Styles": {
+    "LED Display Coral Red": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "true",
+      "Readout.ShowZeroLine": "true",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "false",
+      "Scope Background.ScopeWorldBackgroundColor": "00000029",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.11",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.26",
+      "Scope Text.CustomFontFile": "DigitTech14-Italic.otf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0.1830986",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "0",
+      "Scope Text.ScopeTextThickness": "0",
+      "Scope Text.ScopeWorldTextColor": "FF543AAA",
+      "Scope Text.ScopeWorldTextOffsetY": "0.004"
+    },
+    "VCR Chromatic": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "true",
+      "Readout.ShowZeroLine": "false",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "false",
+      "Scope Background.ScopeWorldBackgroundColor": "02070A52",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.1",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.27",
+      "Scope Text.CustomFontFile": "vcr-osd-replayed.ttf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0.1612207",
+      "Scope Text.ScopeTextGlow": "0.08",
+      "Scope Text.ScopeTextOutline": "0.04",
+      "Scope Text.ScopeTextSpacing": "3.5",
+      "Scope Text.ScopeTextThickness": "-0.14",
+      "Scope Text.ScopeWorldTextColor": "F4F8FFFF",
+      "Scope Text.ScopeWorldTextOffsetY": "-0.001633802"
+    },
+    "DSEG7 Mini RGB Split": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "false",
+      "Readout.ShowZeroLine": "false",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "false",
+      "Scope Background.ScopeWorldBackgroundColor": "02070A52",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.1",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.27",
+      "Scope Text.CustomFontFile": "DSEG7ClassicMini-Italic.ttf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0.1612207",
+      "Scope Text.ScopeTextGlow": "0.08",
+      "Scope Text.ScopeTextOutline": "0.04",
+      "Scope Text.ScopeTextSpacing": "7",
+      "Scope Text.ScopeTextThickness": "0",
+      "Scope Text.ScopeWorldTextColor": "F4F8FFFF",
+      "Scope Text.ScopeWorldTextOffsetY": "-0.001633802"
+    },
+    "B612 Cockpit Phosphor": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "true",
+      "Readout.ShowZeroLine": "true",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "true",
+      "Scope Background.ScopeWorldBackgroundColor": "07160759",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.11",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.31",
+      "Scope Text.CustomFontFile": "B612Mono-Regular.ttf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0.2208451",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "3.99061",
+      "Scope Text.ScopeTextThickness": "0",
+      "Scope Text.ScopeWorldTextColor": "A7FF83E1",
+      "Scope Text.ScopeWorldTextOffsetY": "0.0002441316"
+    },
+    "DSEG14 Classic Amber": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "true",
+      "Readout.ShowZeroLine": "true",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "true",
+      "Scope Background.ScopeWorldBackgroundColor": "1A120359",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.12",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.38",
+      "Scope Text.CustomFontFile": "DSEG14ClassicMini-Regular.ttf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0.25",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "6.347418",
+      "Scope Text.ScopeTextThickness": "-0.05",
+      "Scope Text.ScopeWorldTextColor": "FF6100FF",
+      "Scope Text.ScopeWorldTextOffsetY": "0.004"
+    },
+    "DT16 Cyrillic": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "РАСТ",
+      "Readout.ShowUnitSuffix": "true",
+      "Readout.ShowZeroLine": "true",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "НОЛЬ",
+      "Scope Background.ScopeWorldBackground": "false",
+      "Scope Background.ScopeWorldBackgroundColor": "00000029",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.11",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.26",
+      "Scope Text.CustomFontFile": "DigitTech16-Regular.otf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0.1830986",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "6.807511",
+      "Scope Text.ScopeTextThickness": "-0.1314554",
+      "Scope Text.ScopeWorldTextColor": "FF7300D4",
+      "Scope Text.ScopeWorldTextOffsetY": "0.004"
+    },
+    "LCD14 Starburst Red": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "true",
+      "Readout.ShowZeroLine": "true",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "true",
+      "Scope Background.ScopeWorldBackgroundColor": "1A050459",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.11",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.23",
+      "Scope Text.CustomFontFile": "LCD14Condensed.otf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0.18",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "11.05164",
+      "Scope Text.ScopeTextThickness": "0.1087324",
+      "Scope Text.ScopeWorldTextColor": "FF4B36FF",
+      "Scope Text.ScopeWorldTextOffsetY": "-0.01196244"
+    },
+    "Oxanium HUD Cyan": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "true",
+      "Readout.ShowZeroLine": "true",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "true",
+      "Scope Background.ScopeWorldBackgroundColor": "05141A57",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.11",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.32",
+      "Scope Text.CustomFontFile": "Oxanium-Medium.ttf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0.2832864",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "8.450704",
+      "Scope Text.ScopeTextThickness": "-0.1453521",
+      "Scope Text.ScopeWorldTextColor": "67E8FFFF",
+      "Scope Text.ScopeWorldTextOffsetY": "-0.005389671"
+    },
+    "Quantico Tactical Amber": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "true",
+      "Readout.ShowZeroLine": "true",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "true",
+      "Scope Background.ScopeWorldBackgroundColor": "1A100559",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.13",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.32",
+      "Scope Text.CustomFontFile": "Quantico-Regular.ttf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0.12",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "7.042253",
+      "Scope Text.ScopeTextThickness": "0",
+      "Scope Text.ScopeWorldTextColor": "FFBD66AA",
+      "Scope Text.ScopeWorldTextOffsetY": "0.003061033"
+    },
+    "Rajdhani Tech Chartreuse": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "false",
+      "Readout.ShowZeroLine": "true",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "true",
+      "Scope Background.ScopeWorldBackgroundColor": "10180759",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.11",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.25",
+      "Scope Text.CustomFontFile": "Rajdhani-Regular.ttf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0.1340845",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "7.981219",
+      "Scope Text.ScopeTextThickness": "0",
+      "Scope Text.ScopeWorldTextColor": "CBFF75FF",
+      "Scope Text.ScopeWorldTextOffsetY": "-0.001633803"
+    },
+    "Tech Mono Ice": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "true",
+      "Readout.ShowZeroLine": "true",
+      "Readout.UseDecimalFormat": "true",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "true",
+      "Scope Background.ScopeWorldBackgroundColor": "0F0F0F59",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.11",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.27",
+      "Scope Text.CustomFontFile": "ShareTechMono-Regular.ttf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0.15",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "7.042253",
+      "Scope Text.ScopeTextThickness": "0",
+      "Scope Text.ScopeWorldTextColor": "D8ECFFFF",
+      "Scope Text.ScopeWorldTextOffsetY": "-0.001633803"
+    },
+    "Terminal Green": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "true",
+      "Readout.ShowZeroLine": "true",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "true",
+      "Scope Background.ScopeWorldBackgroundColor": "05140566",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.1",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.22",
+      "Scope Text.CustomFontFile": "VT323-Regular.ttf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0.25",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "5.399061",
+      "Scope Text.ScopeTextThickness": "-0.1014085",
+      "Scope Text.ScopeWorldTextColor": "00FF41FF",
+      "Scope Text.ScopeWorldTextOffsetY": "0.002122066"
+    },
+    "RAPTAR EFT Style": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "false",
+      "Readout.ShowZeroLine": "false",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "false",
+      "Scope Background.ScopeWorldBackgroundColor": "00000053",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.11",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.31",
+      "Scope Text.CustomFontFile": "",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "GameBender",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0",
+      "Scope Text.ScopeTextOutline": "0.1333333",
+      "Scope Text.ScopeTextSpacing": "6",
+      "Scope Text.ScopeTextThickness": "0.1352113",
+      "Scope Text.ScopeWorldTextColor": "FFFF1EFF",
+      "Scope Text.ScopeWorldTextOffsetY": "0.004"
+    },
+    "RAPTAR Lite ES": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "false",
+      "Readout.ShowZeroLine": "false",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "true",
+      "Scope Background.ScopeWorldBackgroundColor": "00000041",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.11",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.25",
+      "Scope Text.CustomFontFile": "DigitTech7-Italic.otf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "-0.5727701",
+      "Scope Text.ScopeTextThickness": "-0.1539906",
+      "Scope Text.ScopeWorldTextColor": "3DFF3CFF",
+      "Scope Text.ScopeWorldTextOffsetY": "0.0002441316"
+    },
+    "RAPTAR S": {
+      "Readout.DistanceUnit": "Meters",
+      "Readout.NoDistanceText": "----",
+      "Readout.RangeLinePrefix": "RNG",
+      "Readout.ShowUnitSuffix": "false",
+      "Readout.ShowZeroLine": "true",
+      "Readout.UseDecimalFormat": "false",
+      "Readout.ZeroLinePrefix": "ZRO",
+      "Scope Background.ScopeWorldBackground": "true",
+      "Scope Background.ScopeWorldBackgroundColor": "00000053",
+      "Scope Background.ScopeWorldBackgroundHeight": "0.1",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.26",
+      "Scope Text.CustomFontFile": "HomeVideo-Regular.ttf",
+      "Scope Text.ScopeFontName": "Consolas",
+      "Scope Text.ScopeFontSource": "CustomFont",
+      "Scope Text.ScopeTextAberration": "0",
+      "Scope Text.ScopeTextGlow": "0",
+      "Scope Text.ScopeTextOutline": "0",
+      "Scope Text.ScopeTextSpacing": "3.521127",
+      "Scope Text.ScopeTextThickness": "-0.1802817",
+      "Scope Text.ScopeWorldTextColor": "FFFFFFFF",
+      "Scope Text.ScopeWorldTextOffsetY": "-0.001633802"
     }
   }
 }

@@ -70,7 +70,10 @@ namespace ScopeRangefinder
         private void DrawLayoutEditorWindow(int windowId)
         {
             string currentKey = string.IsNullOrEmpty(_currentLayoutKey) ? "(no active scope)" : _currentLayoutKey;
-            EnsureEditorDraft(_currentLayoutKey);
+            if (Event.current.type == EventType.Layout)
+            {
+                EnsureEditorDraft(_currentLayoutKey);
+            }
 
             GUILayout.Label("Current Scope Key");
             GUILayout.BeginHorizontal();
@@ -79,12 +82,13 @@ namespace ScopeRangefinder
             {
                 GUIUtility.systemCopyBuffer = _currentLayoutKey ?? string.Empty;
                 _editorStatus = "Key copied";
+                GUIUtility.ExitGUI();
             }
             GUILayout.EndHorizontal();
 
             GUILayout.Space(8f);
-            _editorOffsetX = DrawFloatControl("OffsetX", _editorOffsetX, LayoutEditorOffsetStep);
-            _editorOffsetY = DrawFloatControl("OffsetY", _editorOffsetY, LayoutEditorOffsetStep);
+            _editorOffsetX = DrawFloatControl("OffsetX", _editorOffsetX, LayoutEditorOffsetStep, "◀", "▶");
+            _editorOffsetY = DrawFloatControl("OffsetY", _editorOffsetY, LayoutEditorOffsetStep, "▼", "▲");
             _editorScale = Mathf.Clamp(
                 DrawFloatControl("Scale", _editorScale, LayoutEditorScaleStep),
                 LayoutEditorMinimumScaleAdjustment,
@@ -96,16 +100,22 @@ namespace ScopeRangefinder
             if (GUILayout.Button("Save"))
             {
                 SaveEditorDraft();
+                GUI.enabled = true;
+                GUIUtility.ExitGUI();
             }
 
             if (GUILayout.Button("Reset"))
             {
                 ResetEditorDraft();
+                GUI.enabled = true;
+                GUIUtility.ExitGUI();
             }
 
             if (GUILayout.Button("Close"))
             {
                 SetLayoutEditorVisible(false);
+                GUI.enabled = true;
+                GUIUtility.ExitGUI();
             }
             GUI.enabled = true;
             GUILayout.EndHorizontal();
@@ -168,33 +178,40 @@ namespace ScopeRangefinder
             return _layoutEditorRect.Contains(mousePosition);
         }
 
-        private float DrawFloatControl(string label, float value, float step)
+        private float DrawFloatControl(
+            string label,
+            float value,
+            float step,
+            string decreaseGlyph = "-",
+            string increaseGlyph = "+")
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label(label, GUILayout.Width(58f));
 
-            if (GUILayout.Button("--", GUILayout.Width(34f)))
+            if (GUILayout.Button(decreaseGlyph + decreaseGlyph, GUILayout.Width(42f)))
             {
                 value -= step * 10f;
             }
 
-            if (GUILayout.Button("-", GUILayout.Width(28f)))
+            if (GUILayout.Button(decreaseGlyph, GUILayout.Width(32f)))
             {
                 value -= step;
             }
 
             string text = GUILayout.TextField(value.ToString("0.#####", CultureInfo.InvariantCulture), GUILayout.Width(86f));
-            if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed))
+            if (float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed)
+                && !float.IsNaN(parsed)
+                && !float.IsInfinity(parsed))
             {
                 value = parsed;
             }
 
-            if (GUILayout.Button("+", GUILayout.Width(28f)))
+            if (GUILayout.Button(increaseGlyph, GUILayout.Width(32f)))
             {
                 value += step;
             }
 
-            if (GUILayout.Button("++", GUILayout.Width(34f)))
+            if (GUILayout.Button(increaseGlyph + increaseGlyph, GUILayout.Width(42f)))
             {
                 value += step * 10f;
             }

@@ -1,4 +1,50 @@
 # Changelog
+## 2.3.0 (in development)
+
+### Added
+
+- Added a font picker to the settings menu: the `Custom Font File` entry is a dropdown showing the current selection; expanded it lists all files in the fonts folder as clickable buttons (one click selects the font, switches the source to `CustomFont`, and collapses the list), with `Open Folder` and `Rescan` buttons. The text field stays available for the `bundle:asset` syntax.
+- The mod now ships a curated set of display fonts (SIL Open Font License, family license files included): DSEG7/14 Classic and DSEG14 Modern plus LCD14 Condensed for segment displays; B612 Mono for a real cockpit-derived face; Quantico, Oxanium, and Rajdhani for tactical/HUD looks; and Share Tech Mono plus VT323 for mono/terminal styles. Exact upstream versions and checksums are included in `fonts/FONT-SOURCES.md`.
+- Added a zeroing line to the readout (`ShowZeroLine`, on by default): a second row showing the currently effective zero — the auto-zeroed distance, `auto` in continuous mode, or the sight's dial distance when auto zero is off. Line prefixes are configurable (`RNG`/`ZRO` by default, empty = none); rows are left-aligned with the block centered on the automatically grown background plate. While the zeroing line is visible in the scope, the game's corner zeroing panel stays hidden. Disable it to restore the plain single-line RAPTAR look.
+- Added a live readout preview at the top of the Scope Text settings: a sample distance rendered with the current font, color, thickness, spacing, glow, outline, and aberration — font tuning without looking through a scope.
+- Added a `Reset` button in the General settings that resets every setting of the mod to its default value, guarded by a confirming second click.
+- Added a `Developer > Log Scope Keys` option (advanced, off by default): logs the layout key of each sighted scope for hand-editing per-scope overrides in `ScopeRangefinder.layouts.json`. Previously the key was logged unconditionally; the layout editor still shows and copies the key regardless of this option.
+- The layout editor's `+`/`-` buttons for OffsetX/OffsetY are now directional arrows (`◀◀ ◀ ▶ ▶▶` / `▼▼ ▼ ▲ ▲▲`), so the click direction matches the movement on screen. Scale keeps `-`/`+`.
+- Added style presets: named looks covering all Readout, Scope Text, and Scope Background settings, selectable from a `Style Preset` dropdown in the General settings. One click applies a preset; the current look can be saved under a new name, and own presets can be deleted from the dropdown (guarded by a confirming second click). The file layout mirrors the scope layouts: shipped presets live in a `Styles` section of the read-only `ScopeRangefinder.presets.json` — replaced wholesale on updates, so never edit it — while every preset you save lands in `ScopeRangefinder.styles.json`, which updates never touch (shipped names are reserved). Shipped presets: `RAPTAR EFT Style`, `RAPTAR EFT Style 2`, `RAPTAR Lite ES`, `RAPTAR S`, `LED Display Coral Red`, `Home Video Optical Split`, `DSEG Mini RGB Split`, `DSEG Modern Amber`, `LCD14 Starburst Red`, `B612 Cockpit Phosphor`, `Quantico Tactical Amber`, `Oxanium HUD Cyan`, `Rajdhani Tech Chartreuse`, `Terminal Green`, and `Tech Mono Ice`.
+- On the first start after updating from a pre-2.3.0 version, the previous look is saved automatically as the style preset `My Settings (pre-2.3.0)` and the showcase preset `LED Display Coral Red` is applied once, so the new style system is immediately visible. The old look is one click away in the preset list; fresh installs keep the defaults.
+
+- Added a `Black Outline` setting (Scope Text): black outline around the glyphs for contrast against bright backgrounds, `0` = off. Outline is a base feature of the SDF shader, so it works with every SDF font; the glow stays in the pure text color even with an outline active.
+- Added a `Chromatic Aberration` setting (Scope Text): color fringes on the readout, displaced in opposite directions — radially away from the scope center, like real lens dispersion, which grows outward from the optical axis. Fringe hues follow the text color: its spectral neighbors (hue ± 40°) for saturated colors, so colored text never washes toward white, blending to the classic red/cyan split for white text. The fringe opacity ramps in over the low slider range, so small values fade the effect in smoothly instead of abruptly brightening the glyph edges. `0` = off. The settings preview shows the effect with a horizontal split; the included `Home Video Optical Split` preset demonstrates a restrained red/cyan treatment.
+
+### Changed
+
+- The readout now shows regardless of zoom by default: `MinZoomBlendFactor` default changed from `0.3` to `0`. Existing config files keep their saved value.
+- `ShowDelay` moved from the Readout section to Activation, where it belongs conceptually — it controls when the readout appears, not what it shows. It is therefore no longer part of style presets. A previously customized value resets to its default once due to the section move.
+- The layout editor hotkey (`ToggleEditor`) moved from its own section into General. A previously customized binding resets to `F8` once due to the section move.
+- The readout now forces monospacing for every character, not just digits (the RAPTAR routine only fixes digit widths): line prefixes and unit suffixes align in columns across both readout rows regardless of the selected font — even the game's Bender is not naturally monospaced.
+- Reworked the text glow: three stacked silhouette passes with staggered falloff — narrow and bright at the glyph edge, wide and faint outside — approximate the Gaussian falloff of a real glow far better than the previous single pass, and the dilate now stays at the glyph edge so the glow no longer bolds the letters. (The SDF shader's built-in underlay was evaluated as a single-pass alternative and rendered identically, so the mod sticks with the approach that cannot be affected by shader-variant stripping.)
+
+## 2.2.0
+
+### Added
+
+- The readout now uses the game's own Bender font — the exact TMP SDF asset the RAPTAR display and most of the game UI render with (`ScopeFontSource`, default `GameBender`; `SystemFont` remains selectable). No external font files needed.
+- Added a `Text Thickness` setting: continuous stroke weight adjustment of the readout text (negative = thinner, positive = bolder), made possible by SDF rendering. This replaces a dedicated bold font variant.
+- Added a `CustomFont` source: drop a `.ttf`/`.otf` file or a TMP font asset bundle into `BepInEx/plugins/maschine-ScopeRangefinder/fonts/` and select it via `Custom Font File`. Bundles with several fonts support `bundlefile:FontAssetName` to pick one; available names are logged.
+- Added a `Letter Spacing` setting: extra character spacing for fonts with tight digit cells, such as 7-segment fonts.
+- Added a `Text Glow` setting: soft glow around the readout text in its own color, like an illuminated display. `0` = off; requires an SDF font.
+- Added a `Distance Unit` setting (meters/yards), like the unit toggle on real rangefinders, plus an optional unit suffix on the readout (`0123m` / `0135yd`, off by default like the vanilla RAPTAR). Auto zero always works on the true metric distance; the zeroing panel shows the selected unit.
+- `SystemFont` now also finds per-user installed fonts (`%LOCALAPPDATA%\Microsoft\Windows\Fonts`), which Unity's OS font list misses — machine-wide fonts like Times New Roman worked, per-user installs like Roboto did not.
+- `System Font Name` accepts the family name as shown in Windows (resolved through the registry font table, e.g. `Lucida Console`) in addition to file names (e.g. `lucon.ttf`).
+- A one-time log hint explains when `Text Thickness` has no effect because the selected font asset is bitmap-rendered instead of SDF.
+- Fixed `SystemFont`/custom font creation throwing every frame: TMP's font asset creation requires the mobile SDF shader, which the game never loads. The shader cache is now seeded with the game's regular Distance Field shader, and failures fall back to the game font with a single log warning.
+- Added a `Developer > LogLoadedFonts` option (advanced, off by default) that logs all loaded font assets plus the RAPTAR display font once per session, as an aid for identifying game fonts.
+
+### Changed
+
+- The readout text migrated from TextMesh to TextMeshPro: crisp SDF edges at any magnification, and digits are monospaced through the same routine the RAPTAR display uses, so the readout width no longer wobbles while digits change.
+- The default readout font is now the game's Bender instead of Consolas. Set `ScopeFontSource` to `SystemFont` to restore the previous look (system fonts are converted to dynamic TMP assets at runtime).
+
 ## 2.1.0
 
 ### Added

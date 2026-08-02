@@ -99,30 +99,99 @@ namespace ScopeRangefinder
 
         private void LogLayoutKeyOnce(string layoutKey, OpticSight currentOpticSight)
         {
-            if (string.IsNullOrEmpty(layoutKey) || layoutKey == _lastLoggedLayoutKey)
+            if (!Plugin.LogScopeKeys.Value || string.IsNullOrEmpty(layoutKey) || layoutKey == _lastLoggedLayoutKey)
             {
                 return;
             }
 
             _lastLoggedLayoutKey = layoutKey;
-            Plugin.LogSource?.LogDebug($"Using scope layout key '{layoutKey}'.");
+            Plugin.LogSource?.LogInfo($"Using scope layout key '{layoutKey}'.");
         }
 
-        private string BuildDistanceText()
+        private const float MetersPerYard = 0.9144f;
+        private string BuildDistanceText(bool includeZeroLine = true)
         {
-            if (!_lastRaycastHit)
+            string rangeValue = _lastRaycastHit
+                ? FormatDistanceValue(GetDisplayDistance())
+                : Plugin.NoDistanceText.Value;
+
+            if (!includeZeroLine || !Plugin.ShowZeroLine.Value)
             {
-                return Plugin.NoDistanceText.Value;
+                return rangeValue;
             }
+
+            return ComposeReadoutLine(Plugin.RangeLinePrefix.Value, rangeValue)
+                + "\n"
+                + ComposeReadoutLine(Plugin.ZeroLinePrefix.Value, BuildZeroValueText());
+        }
+        private string BuildZeroValueText()
+        {
+            EFT.InventoryLogic.SightComponent currentSight = _activeWeaponAnimation?.CurrentAimingMod;
+
+            if (Plugin.AutoZeroEnabled.Value && IsAutoZeroEffective(currentSight))
+            {
+                if (Plugin.AutoZeroMode.Value == AutoZeroMode.Continuous)
+                {
+                    return "auto";
+                }
+
+                if (_autoZeroLastDistance > 0)
+                {
+                    return FormatDistanceValue(_autoZeroLastDistance);
+                }
+            }
+
+            if (currentSight != null
+                && currentSight.HasOpticCalibrationPoints(currentSight.SelectedScopeIndex))
+            {
+                return FormatDistanceValue(currentSight.GetCurrentOpticCalibrationDistance());
+            }
+
+            return Plugin.NoDistanceText.Value;
+        }
+
+        private static string ComposeReadoutLine(string prefix, string value)
+        {
+            prefix = prefix?.Trim();
+            return string.IsNullOrEmpty(prefix) ? value : prefix + " " + value;
+        }
+
+        private static string FormatDistanceValue(float meters)
+        {
+            float displayDistance = ConvertToDisplayUnit(meters);
+            string suffix = Plugin.ShowUnitSuffix.Value ? GetUnitSuffix() : string.Empty;
 
             if (Plugin.UseDecimalFormat.Value)
             {
-                float clamped = Mathf.Clamp(GetDisplayDistance(), 0f, 999f);
-                return clamped.ToString("000.0");
+                return Mathf.Clamp(displayDistance, 0f, 999f).ToString("000.0") + suffix;
             }
 
-            int meters = Mathf.Clamp(Mathf.RoundToInt(GetDisplayDistance()), 0, 9999);
-            return meters.ToString("D4");
+            return Mathf.Clamp(Mathf.RoundToInt(displayDistance), 0, 9999).ToString("D4") + suffix;
+        }
+        private static float ConvertToDisplayUnit(float meters)
+        {
+            return Plugin.DistanceUnit.Value == DistanceUnit.Yards ? meters / MetersPerYard : meters;
+        }
+
+        private static string GetUnitSuffix()
+        {
+            return Plugin.DistanceUnit.Value == DistanceUnit.Yards ? "yd" : "m";
+        }
+        internal static string FormatPanelDistance(int meters)
+        {
+            return Mathf.RoundToInt(ConvertToDisplayUnit(meters)) + GetUnitSuffix();
+        }
+        internal static string BuildSampleDistanceText()
+        {
+            string rangeValue = FormatDistanceValue(123.4f);
+            if (!Plugin.ShowZeroLine.Value)
+            {
+                return rangeValue;
+            }
+
+            return ComposeReadoutLine(Plugin.RangeLinePrefix.Value, rangeValue)
+                + "\n"
+                + ComposeReadoutLine(Plugin.ZeroLinePrefix.Value, FormatDistanceValue(400f));
         }
 
         internal void MarkDistanceTextDirty()
@@ -137,7 +206,7 @@ namespace ScopeRangefinder
                 return;
             }
 
-            string text = BuildDistanceText();
+            string text = BuildDistanceText(includeZeroLine: false);
             if (text == _lastRenderedDistanceText)
             {
                 _distanceTextDirty = false;
