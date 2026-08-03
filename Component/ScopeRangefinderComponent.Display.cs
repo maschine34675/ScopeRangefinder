@@ -8,6 +8,14 @@ namespace ScopeRangefinder
     internal partial class ScopeRangefinderComponent
     {
         private bool _distanceTextDirty = true;
+        private string _overlayLastRenderedText;
+        private bool _overlayDisplayVisible;
+        private Image[] _panelImages;
+        private Outline _overlayOutline;
+        private RectTransform _distanceTextRect;
+
+        private const float OverlayBasePanelWidth = 142f;
+        private const float OverlayBasePanelHeight = 46f;
         private string _lastRenderedDistanceText;
 
         private bool ApplyDisplayLayout()
@@ -19,10 +27,15 @@ namespace ScopeRangefinder
 
             ApplyScreenOverlayCanvasMode();
             SetPanelAnchors(new Vector2(0.5f, 0.30f));
-            _panelRect.localScale = Vector3.one;
+            ScopeLayoutEntry layout = GetLayoutForDisplay(_currentLayoutKey);
+            float layoutOffsetX = (layout.OffsetX ?? 0f) * 1920f;
+            float layoutOffsetY = (layout.OffsetY ?? 0f) * 1080f;
+            float scaleFactor = ResolveLayoutUiScale(layout.Scale ?? 0f) / ScopeCanvasDefaultUiScale;
+
+            _panelRect.localScale = Vector3.one * scaleFactor;
             _panelRect.anchoredPosition = new Vector2(
-                ScopeDisplayStyle.DefaultOffsetX + Plugin.DisplayOffsetX.Value,
-                ScopeDisplayStyle.DefaultOffsetY + Plugin.DisplayOffsetY.Value);
+                ScopeDisplayStyle.DefaultOffsetX + layoutOffsetX,
+                ScopeDisplayStyle.DefaultOffsetY + layoutOffsetY);
             return true;
         }
 
@@ -109,13 +122,14 @@ namespace ScopeRangefinder
         }
 
         private const float MetersPerYard = 0.9144f;
-        private string BuildDistanceText(bool includeZeroLine = true)
+
+        private string BuildDistanceText()
         {
             string rangeValue = _lastRaycastHit
                 ? FormatDistanceValue(GetDisplayDistance())
                 : Plugin.NoDistanceText.Value;
 
-            if (!includeZeroLine || !Plugin.ShowZeroLine.Value)
+            if (!Plugin.ShowZeroLine.Value)
             {
                 return rangeValue;
             }
@@ -206,15 +220,15 @@ namespace ScopeRangefinder
                 return;
             }
 
-            string text = BuildDistanceText(includeZeroLine: false);
-            if (text == _lastRenderedDistanceText)
+            string text = BuildDistanceText();
+            if (text == _overlayLastRenderedText)
             {
                 _distanceTextDirty = false;
                 return;
             }
 
             _distanceText.text = text;
-            _lastRenderedDistanceText = text;
+            _overlayLastRenderedText = text;
             _distanceTextDirty = false;
         }
 
@@ -247,6 +261,111 @@ namespace ScopeRangefinder
 
             _panelRect = panelRect;
             _distanceText = ScopeDisplayStyle.CreateReadoutText(panelRect);
+            _distanceTextRect = _distanceText.rectTransform;
+            _panelImages = panelRect.GetComponentsInChildren<Image>(true);
+            _overlayOutline = _distanceText.gameObject.AddComponent<Outline>();
+            _overlayOutline.effectColor = Color.black;
+            _overlayOutline.enabled = false;
+        }
+        private void ApplyOverlayAppearance()
+        {
+            if (_distanceText == null)
+            {
+                return;
+            }
+
+            Font font = ScopeDisplayStyle.LoadRangefinderFont();
+            if (font != null && _distanceText.font != font)
+            {
+                _distanceText.font = font;
+            }
+
+            Color textColor = Plugin.ScopeWorldTextColor.Value;
+            if (_distanceText.color != textColor)
+            {
+                _distanceText.color = textColor;
+            }
+
+            bool zeroLine = Plugin.ShowZeroLine.Value;
+            TextAnchor alignment = zeroLine ? TextAnchor.MiddleLeft : TextAnchor.MiddleCenter;
+            if (_distanceText.alignment != alignment)
+            {
+                _distanceText.alignment = alignment;
+            }
+
+            if (_panelRect != null)
+            {
+                float width = OverlayBasePanelWidth
+                    * (Mathf.Max(0.05f, Plugin.ScopeWorldBackgroundWidth.Value) / 0.26f)
+                    * (zeroLine ? 1.6f : 1f);
+                float height = OverlayBasePanelHeight
+                    * (Mathf.Max(0.03f, Plugin.ScopeWorldBackgroundHeight.Value) / 0.11f)
+                    * (zeroLine ? 1.85f : 1f);
+                var panelSize = new Vector2(width, height);
+                if (_panelRect.sizeDelta != panelSize)
+                {
+                    _panelRect.sizeDelta = panelSize;
+                }
+            }
+
+            if (_panelImages != null)
+            {
+                bool showBackground = Plugin.ScopeWorldBackground.Value;
+                Color backgroundColor = Plugin.ScopeWorldBackgroundColor.Value;
+                var accentColor = new Color(
+                    Mathf.Clamp01(backgroundColor.r * 2.2f),
+                    Mathf.Clamp01(backgroundColor.g * 2.2f),
+                    Mathf.Clamp01(backgroundColor.b * 2.2f),
+                    backgroundColor.a * 0.65f);
+                for (int i = 0; i < _panelImages.Length; i++)
+                {
+                    Image image = _panelImages[i];
+                    if (image == null)
+                    {
+                        continue;
+                    }
+
+                    if (image.enabled != showBackground)
+                    {
+                        image.enabled = showBackground;
+                    }
+
+                    Color layerColor = i == 0 ? backgroundColor : accentColor;
+                    if (image.color != layerColor)
+                    {
+                        image.color = layerColor;
+                    }
+                }
+            }
+
+            if (_overlayOutline != null)
+            {
+                float outline = Mathf.Clamp01(Plugin.ScopeTextOutline.Value);
+                bool outlineActive = outline > 0.001f;
+                if (_overlayOutline.enabled != outlineActive)
+                {
+                    _overlayOutline.enabled = outlineActive;
+                }
+
+                if (outlineActive)
+                {
+                    Vector2 effectDistance = Vector2.one * (outline * 5f);
+                    if (_overlayOutline.effectDistance != effectDistance)
+                    {
+                        _overlayOutline.effectDistance = effectDistance;
+                    }
+                }
+            }
+
+            if (_distanceTextRect != null)
+            {
+                float offsetY = Plugin.ScopeWorldTextOffsetY.Value / 0.11f * OverlayBasePanelHeight;
+                var anchored = new Vector2(0f, offsetY);
+                if (_distanceTextRect.anchoredPosition != anchored)
+                {
+                    _distanceTextRect.anchoredPosition = anchored;
+                }
+            }
         }
     }
 }

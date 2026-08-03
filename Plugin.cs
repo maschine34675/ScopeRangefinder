@@ -16,7 +16,7 @@ namespace ScopeRangefinder
     {
         public const string PluginGuid = "com.maschine.ScopeRangefinder";
         public const string PluginName = "maschine-ScopeRangefinder";
-        public const string PluginVersion = "2.3.0";
+        public const string PluginVersion = "2.3.1";
         public const string PiPDisablerGuid = "com.fiodor.pipdisabler";
 
         public static ManualLogSource LogSource;
@@ -33,8 +33,6 @@ namespace ScopeRangefinder
         public static ConfigEntry<string> ZeroLinePrefix;
         public static ConfigEntry<float> MinZoomBlendFactor;
         public static ConfigEntry<float> MinDisplayDistance;
-        public static ConfigEntry<float> DisplayOffsetX;
-        public static ConfigEntry<float> DisplayOffsetY;
         public static ConfigEntry<float> DisplayShowDelay;
         public static ConfigEntry<Color> ScopeWorldTextColor;
         public static ConfigEntry<ScopeFontSource> ScopeFontSource;
@@ -299,10 +297,6 @@ namespace ScopeRangefinder
                 new KeyboardShortcut(KeyCode.F8),
                 Tagged("Toggle Layout Editor", 5, "Hotkey to show or hide the in-game scope layout editor."));
 
-            DisplayOffsetX = Config.Bind("Legacy Screen Overlay", "OffsetX", 0f,
-                Tagged("Overlay Offset X (px)", 10, "Automatic PiP-Disabler fallback only: horizontal offset in pixels."));
-            DisplayOffsetY = Config.Bind("Legacy Screen Overlay", "OffsetY", 0f,
-                Tagged("Overlay Offset Y (px)", 0, "Automatic PiP-Disabler fallback only: vertical offset in pixels."));
             LogScopeKeys = Config.Bind(
                 "Developer",
                 "LogScopeKeys",
@@ -338,9 +332,9 @@ namespace ScopeRangefinder
 
             if (PiPDisablerLoaded)
             {
-                LogSource.LogWarning(
-                    "PiP-Disabler detected. Vanilla optic camera is disabled while scoped; " +
-                    "ScopeRangefinder will use the fallback screen overlay.");
+                LogSource.LogInfo(
+                    "PiP-Disabler detected. While it suppresses the vanilla optic camera, ScopeRangefinder " +
+                    "uses the fallback screen overlay; bypassed or disabled scopes get the full in-scope readout.");
             }
 
             LogSource.LogInfo($"{PluginName} v{PluginVersion} loaded (build {BuildInfo.Timestamp}).");

@@ -57,7 +57,6 @@ namespace ScopeRangefinder
             {
                 return _cachedFont;
             }
-
             if (source != ScopeFontSource.SystemFont)
             {
                 if (_cachedFont == null || Time.unscaledTime >= _nextGameFontRetryTime)

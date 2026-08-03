@@ -72,7 +72,7 @@ namespace ScopeRangefinder
             if (activeOpticSight != null
                 && activeOpticSight.isActiveAndEnabled
                 && opticCamera != null
-                && opticCamera.gameObject.activeInHierarchy)
+                && opticCamera.isActiveAndEnabled)
             {
                 scopeCamera = opticCamera;
                 currentOpticSight = activeOpticSight;

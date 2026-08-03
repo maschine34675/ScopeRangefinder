@@ -39,7 +39,7 @@ namespace ScopeRangefinder
 
         private bool ShouldUseReticleCommandBufferDisplay()
         {
-            return !Plugin.PiPDisablerLoaded && !_usingMainCameraScope;
+            return !_usingMainCameraScope;
         }
 
         internal void SyncReticleCommandBufferDisplay(

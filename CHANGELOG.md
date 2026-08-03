@@ -1,4 +1,19 @@
 # Changelog
+## 2.3.1
+
+### Added
+
+- The layout editor now also works on the fallback screen overlay: per-scope offsets and scale are stored under their own `overlay:`-prefixed keys in `ScopeRangefinder.layouts.json`, separate from the in-scope layouts, so tuning one path never affects the other. Offsets move the panel as fractions of the screen; the shipped in-scope presets deliberately do not apply to the overlay.
+- The fallback screen overlay (PiP-Disabler path) now honors most style options: text color, font, black outline, background plate toggle/color/size, vertical text offset, and the two-line zeroing layout — including hiding the game's corner zeroing panel while the overlay shows the zero. Style presets therefore restyle the overlay too. SDF-bound options (thickness, glow, letter spacing, chromatic aberration, TMP font bundles) remain exclusive to the in-scope display; custom font files are TMP-based as well, so the overlay falls back to the game font for them (Unity's legacy font system cannot load loose font files at runtime).
+
+### Removed
+
+- The `Legacy Screen Overlay` options `OffsetX`/`OffsetY` (global pixel offset): superseded by the per-scope layout editor on the overlay path. A previously customized global offset no longer applies — reposition via the layout editor (F8) instead, per scope.
+
+### Fixed
+
+- Better PiP-Disabler compatibility: the render path now follows PiP-Disabler's actual runtime state per scope instead of its mere installation. Scopes on its bypass list — or all scopes while its global toggle is off — get the full in-scope readout with per-scope layouts again; the fallback screen overlay is only used while the vanilla optic camera is genuinely suppressed. The optic-camera detection also got stricter (camera component enabled, not just an active object), so a suppressed camera can never end up with the readout bound to it.
+
 ## 2.3.0
 
 ### Added

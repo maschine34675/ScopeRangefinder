@@ -336,7 +336,7 @@ namespace ScopeRangefinder
             return instance != null
                 && Plugin.Enabled.Value
                 && Plugin.ShowZeroLine.Value
-                && instance._opticDisplayVisible;
+                && (instance._opticDisplayVisible || instance._overlayDisplayVisible);
         }
         internal static bool TryGetZeroingPanelText(out string panelText)
         {

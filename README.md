@@ -263,12 +263,9 @@ Notes:
 
 ### Legacy Screen Overlay
 
-These options only matter when PiP-Disabler is installed and the mod automatically uses the fallback screen overlay.
+The fallback screen overlay (used while PiP-Disabler actually suppresses the vanilla optic camera) has no dedicated options. It honors the shared style options: text color, font (game and system fonts; custom font files are a TMP feature and fall back to the game font), black outline, background plate toggle/color/size, vertical text offset, the zeroing line, and all readout format options — so style presets restyle the overlay too. SDF-bound options (thickness, glow, letter spacing, chromatic aberration, TMP font bundles) only affect the in-scope display.
 
-| Key | Default | Description |
-| --- | --- | --- |
-| `OffsetX` | `0` | Horizontal screen overlay offset |
-| `OffsetY` | `0` | Vertical screen overlay offset |
+The layout editor positions the overlay per scope: offsets and scale are stored under `overlay:`-prefixed keys in `ScopeRangefinder.layouts.json`, separate from the in-scope layouts. Shipped in-scope presets do not apply to the overlay.
 
 ### Developer
 
@@ -285,7 +282,7 @@ Advanced options, hidden unless the settings menu shows advanced settings.
 - Red dots, holographics, and iron sights are not affected.
 - The mod measures distance from the active optic camera direction.
 - The readout itself never changes weapon zeroing, ballistics, or point of impact; only enabling auto zero does, and only for the optic it's applied to.
-- With PiP-Disabler installed, the vanilla optic camera is unavailable while scoped, so the mod automatically uses the fallback screen overlay.
+- With PiP-Disabler installed, the mod follows its runtime state per scope: while PiP is actually suppressed, the fallback screen overlay is used; scopes on PiP-Disabler's bypass list (or with its global toggle off) get the full in-scope readout.
 
 ## Credits
 

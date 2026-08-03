@@ -18,6 +18,7 @@ namespace ScopeRangefinder
         private const float ScopeCanvasMinUiScale = 0.25f;
         private const float ScopeCanvasMaxUiScale = 4f;
         private const string WilcoxRaptarTemplateId = "61605d88ffa6e502ac5e7eeb";
+        private const string OverlayLayoutKeyPrefix = "overlay:";
 
         private Canvas _canvas;
         private CanvasScaler _canvasScaler;
@@ -95,6 +96,10 @@ namespace ScopeRangefinder
             _activeOpticSight = currentOpticSight;
             _activeWeaponAnimation = weaponAnimation;
             _currentLayoutKey = ResolveScopeLayoutKey(currentOpticSight, weaponAnimation);
+            if (_usingMainCameraScope && !string.IsNullOrEmpty(_currentLayoutKey))
+            {
+                _currentLayoutKey = OverlayLayoutKeyPrefix + _currentLayoutKey;
+            }
 
             if (!_isScoped)
             {
@@ -132,16 +137,20 @@ namespace ScopeRangefinder
                 if (!ApplyDisplayLayout())
                 {
                     _canvas.enabled = false;
+                    _overlayDisplayVisible = false;
                     return;
                 }
 
                 _canvas.enabled = true;
+                _overlayDisplayVisible = true;
+                ApplyOverlayAppearance();
                 UpdateDistanceText();
                 return;
             }
 
             _opticDisplayVisible = true;
             _canvas.enabled = false;
+            _overlayDisplayVisible = false;
         }
 
         private void LateUpdate()
@@ -166,12 +175,13 @@ namespace ScopeRangefinder
         {
             _canvas.enabled = false;
             _opticDisplayVisible = false;
+            _overlayDisplayVisible = false;
             HideReticleReadoutDisplay();
         }
 
         private static bool ShouldUseInScopeDisplay()
         {
-            return !Plugin.PiPDisablerLoaded && _activeInstance != null && !_activeInstance._usingMainCameraScope;
+            return _activeInstance != null && !_activeInstance._usingMainCameraScope;
         }
 
         internal static void PopulateReticleReadoutCommandBuffer(CommandBuffer buffer, Camera scopeCamera)
@@ -186,6 +196,7 @@ namespace ScopeRangefinder
             _appliedLayoutOffsetY = float.NaN;
             _appliedLayoutUiScale = float.NaN;
             _lastRenderedDistanceText = null;
+            _overlayLastRenderedText = null;
             _distanceTextDirty = true;
         }
 
@@ -205,6 +216,7 @@ namespace ScopeRangefinder
             _activeWeaponAnimation = null;
             _currentLayoutKey = null;
             _opticDisplayVisible = false;
+            _overlayDisplayVisible = false;
             ResetAppliedLayoutState();
             _configuredScopeCamera = null;
             HideReticleReadoutDisplay();
