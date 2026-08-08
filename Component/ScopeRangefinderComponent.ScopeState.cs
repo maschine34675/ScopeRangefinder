@@ -60,13 +60,13 @@ namespace ScopeRangefinder
             }
             _raptarActivationOverride = Plugin.RequireWilcoxRaptar.Value && Plugin.RequireWilcoxRaptarActive.Value;
 
-            CameraClass cameraClass = CameraClass.Instance;
-            if (cameraClass == null)
+            CameraManager cameraManager = CameraManager.Instance;
+            if (cameraManager == null)
             {
                 return false;
             }
 
-            GClass3687 opticManager = cameraClass.OpticCameraManager;
+            OpticCameraManager opticManager = cameraManager.OpticCameraManager;
             OpticSight activeOpticSight = opticManager?.CurrentOpticSight;
             Camera opticCamera = opticManager?.Camera;
             if (activeOpticSight != null
@@ -80,7 +80,7 @@ namespace ScopeRangefinder
             }
             if (Plugin.PiPDisablerLoaded)
             {
-                Camera mainCamera = cameraClass.Camera;
+                Camera mainCamera = cameraManager.Camera;
                 if (mainCamera != null && mainCamera.gameObject.activeInHierarchy)
                 {
                     scopeCamera = mainCamera;

@@ -1,5 +1,6 @@
 using System;
 using BepInEx.Configuration;
+using EFT;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;

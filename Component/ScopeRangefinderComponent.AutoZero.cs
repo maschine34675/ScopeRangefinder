@@ -1,6 +1,7 @@
 using Comfort.Common;
 using EFT;
 using EFT.Animations;
+using EFT.Ballistics;
 using EFT.InventoryLogic;
 using UnityEngine;
 
@@ -240,7 +241,7 @@ namespace ScopeRangefinder
                 return false;
             }
 
-            pointIndex = sight.method_0(scopeIndex);
+            pointIndex = sight.GetCurrentOpticCalibrationPointIndex(scopeIndex);
             return pointIndex >= 0 && pointIndex < points.Length;
         }
         private bool IsAutoZeroEffective(SightComponent sight)
@@ -494,7 +495,7 @@ namespace ScopeRangefinder
             }
 
             float overheatMult = 1f;
-            BackendConfigSettingsClass backend = Singleton<BackendConfigSettingsClass>.Instance;
+            GlobalConfiguration backend = Singleton<GlobalConfiguration>.Instance;
             if (backend != null && weapon.MalfState != null)
             {
                 float problemsStart = backend.Overheat.OverheatProblemsStart;
@@ -578,7 +579,7 @@ namespace ScopeRangefinder
             }
 
             int pointCount = 0;
-            GClass3735 trajectoryInfo = null;
+            TrajectoryCalculator trajectoryInfo = null;
             try
             {
                 float initialSpeed = ammo.InitialSpeed * speedFactor;
@@ -586,7 +587,7 @@ namespace ScopeRangefinder
                 Vector3 localVelocity = Vector3.forward * initialSpeed;
                 Quaternion localToFireport = Quaternion.Euler(90f, 0f, 0f);
 
-                EftBulletClass.FormTrajectory(
+                Shot.FormTrajectory(
                     localOrigin,
                     localVelocity,
                     ammo.BulletMassGram,
@@ -597,7 +598,7 @@ namespace ScopeRangefinder
                 float previousMagnitude = 0f;
                 for (int i = 0; i < maxPoints; i++)
                 {
-                    EftBulletClass.PredictedTrajectoryCalculation(
+                    Shot.PredictedTrajectoryCalculation(
                         out Vector3 localPosition,
                         out _,
                         trajectoryInfo,

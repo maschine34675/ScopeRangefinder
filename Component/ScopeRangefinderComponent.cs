@@ -46,9 +46,9 @@ namespace ScopeRangefinder
         private float _appliedLayoutUiScale = float.NaN;
         private Camera _configuredScopeCamera;
         private static readonly int RaycastMask =
-            LayerMaskClass.HighPolyWithTerrainMask
-            | LayerMaskClass.TransparentLayerMask
-            | LayerMaskClass.HitColliderMask;
+            LayersMaskController.HighPolyWithTerrainMask
+            | LayersMaskController.TransparentLayerMask
+            | LayersMaskController.HitColliderMask;
 
         private void Awake()
         {

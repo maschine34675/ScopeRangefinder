@@ -1,3 +1,4 @@
+using EFT;
 using EFT.Animations;
 using EFT.CameraControl;
 using TMPro;

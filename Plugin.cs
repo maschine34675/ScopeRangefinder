@@ -16,7 +16,7 @@ namespace ScopeRangefinder
     {
         public const string PluginGuid = "com.maschine.ScopeRangefinder";
         public const string PluginName = "maschine-ScopeRangefinder";
-        public const string PluginVersion = "2.3.1";
+        public const string PluginVersion = "3.0.0";
         public const string PiPDisablerGuid = "com.fiodor.pipdisabler";
 
         public static ManualLogSource LogSource;
