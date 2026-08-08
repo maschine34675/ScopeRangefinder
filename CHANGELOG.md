@@ -1,4 +1,11 @@
 # Changelog
+## 3.0.0 (in development)
+
+### Changed
+
+- Ported to SPT 4.1. The 2.x line stays available for SPT 4.0.
+- Modernized the default look: the defaults of the Readout, Scope Text, and Scope Background settings now match the showcase preset `LED Display Coral Red` (DigitTech 14-segment font, coral red with soft glow, unit suffix on, no background plate) instead of the plain green Bender readout. Fresh installs start with the showcase preset applied; the reset button and presets with missing keys land on the same look. Existing configs keep their saved values — updaters are unaffected. The previous default look remains available as the `RAPTAR EFT Style` preset.
+
 ## 2.3.1
 
 ### Added

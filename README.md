@@ -59,7 +59,7 @@ The mod includes layout presets for vanilla scopes and an in-game layout editor 
 
    `maschine-ScopeRangefinder v2.3.0 loaded (build ...).`
 
-When updating from 2.2.0 or older, the first start saves your previous look as the style preset `My Settings (pre-2.3.0)` and applies the showcase preset once, so the new style system is visible right away. Your old look is one click away in the `Style Preset` dropdown.
+Fresh installs start with the showcase preset (`LED Display Coral Red`) applied — the defaults are its values. When updating from 2.2.0 or older, the first start saves your previous look as the style preset `My Settings (pre-2.3.0)` and applies the showcase preset once; your old look stays one click away in the `Style Preset` dropdown. Updates from 2.3.x keep your look untouched.
 
 If you update from 1.0.0 and still have `BepInEx/plugins/maschine-ScopeRangefinder.dll`, this version tries to remove that old file automatically. If Windows blocks removal, the mod shows a red conflict warning and stays inactive until the old DLL is removed manually.
 
@@ -195,7 +195,7 @@ When both RAPTAR options are enabled, the readout is shown whenever the attached
 | Key | Default | Description |
 | --- | --- | --- |
 | `DistanceUnit` | `Meters` | Displayed unit (`Meters`/`Yards`), like the unit toggle on real rangefinders. Auto zero always works on the true metric distance |
-| `ShowUnitSuffix` | `false` | Append the unit to the readout (`0123m` / `0135yd`). The vanilla RAPTAR shows bare digits |
+| `ShowUnitSuffix` | `true` | Append the unit to the readout (`0123m` / `0135yd`). The vanilla RAPTAR shows bare digits |
 | `UseDecimalFormat` | `false` | `false` = `0123`, `true` = `045.0` |
 | `ShowZeroLine` | `true` | Second readout row showing the currently effective zero: the auto-zeroed distance, `auto` in continuous mode, or the sight's dial distance when auto zero is off. Hides the game's corner zeroing panel while visible. Disable for the plain single-line RAPTAR look |
 | `RangeLinePrefix` | `RNG` | Prefix for the measured distance row when the zeroing line is shown. Empty = none |
@@ -210,15 +210,15 @@ The section starts with a live preview: the readout rendered with the current fo
 
 | Key | Default | Description |
 | --- | --- | --- |
-| `ScopeWorldTextColor` | green, semi-transparent | Text color and transparency |
-| `ScopeFontSource` | `GameBender` | `GameBender` = the game's own Bender font, exactly as on the RAPTAR display. `SystemFont` = installed OS font. `CustomFont` = font file from the plugin's fonts folder |
+| `ScopeWorldTextColor` | coral red, semi-transparent | Text color and transparency |
+| `ScopeFontSource` | `CustomFont` | `GameBender` = the game's own Bender font, exactly as on the RAPTAR display. `SystemFont` = installed OS font. `CustomFont` = font file from the plugin's fonts folder |
 | `ScopeTextThickness` | `0` | Stroke weight: negative = thinner, positive = bolder (SDF fonts) |
 | `ScopeTextSpacing` | `0` | Extra character spacing, useful for tight 7-segment fonts |
-| `ScopeTextGlow` | `0` | Soft glow around the text in its own color, like an illuminated display: three stacked silhouette passes approximating a real glow falloff. `0` = off |
+| `ScopeTextGlow` | `0.18` | Soft glow around the text in its own color, like an illuminated display: three stacked silhouette passes approximating a real glow falloff. `0` = off |
 | `ScopeTextOutline` | `0` | Black outline around the glyphs, for contrast against bright backgrounds. `0` = off (SDF fonts) |
 | `ScopeTextAberration` | `0` | Chromatic aberration: color fringes displaced in opposite directions along the radial axis from the scope center, like lens dispersion. Fringe hues follow the text color (red/cyan for white text). `0` = off (SDF fonts) |
 | `ScopeFontName` | `Consolas` | OS font for `SystemFont`: family name as shown in Windows (`Lucida Console`) or file name (`lucon.ttf`); machine-wide and per-user fonts are found |
-| `CustomFontFile` | (empty) | For `CustomFont`: dropdown listing the files in `BepInEx/plugins/maschine-ScopeRangefinder/fonts/`, or type a `.ttf`/`.otf`/bundle name manually (`file:assetname` selects one of several). Picking a file switches the font source automatically |
+| `CustomFontFile` | `DigitTech14-Italic.otf` | For `CustomFont`: dropdown listing the files in `BepInEx/plugins/maschine-ScopeRangefinder/fonts/`, or type a `.ttf`/`.otf`/bundle name manually (`file:assetname` selects one of several). Picking a file switches the font source automatically |
 | `ScopeWorldTextOffsetY` | `0.004` | Vertical text offset inside the background plate |
 
 Bundled fonts (SIL OFL 1.1 or CC0 1.0; matching license and archive-information files included):
@@ -233,10 +233,10 @@ Exact upstream versions, checksums, and matching color palettes are documented i
 
 | Key | Default | Description |
 | --- | --- | --- |
-| `ScopeWorldBackground` | `true` | Enables the background plate |
+| `ScopeWorldBackground` | `false` | Enables the background plate |
 | `ScopeWorldBackgroundWidth` | `0.26` | Background plate width |
 | `ScopeWorldBackgroundHeight` | `0.11` | Background plate height. This does not change text size |
-| `ScopeWorldBackgroundColor` | dark green, semi-transparent | Background color and transparency |
+| `ScopeWorldBackgroundColor` | black, mostly transparent | Background color and transparency |
 
 ### Auto Zero
 

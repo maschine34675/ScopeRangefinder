@@ -134,7 +134,7 @@ namespace ScopeRangefinder
                 Tagged("Distance Unit", 15,
                     "Unit for the displayed distance, like the unit toggle on real rangefinders. " +
                     "Auto zero always works on the true metric distance regardless of this setting."));
-            ShowUnitSuffix = Config.Bind("Readout", "ShowUnitSuffix", false,
+            ShowUnitSuffix = Config.Bind("Readout", "ShowUnitSuffix", true,
                 Tagged("Show Unit Suffix", 12,
                     "Append the unit to the readout (e.g. 0123m / 0135yd). The vanilla RAPTAR shows bare digits."));
             UseDecimalFormat = Config.Bind("Readout", "UseDecimalFormat", false,
@@ -164,9 +164,10 @@ namespace ScopeRangefinder
                         HideDefaultButton = true,
                         CustomDrawer = ScopeRangefinderComponent.DrawFontPreview
                     }));
-            ScopeWorldTextColor = Config.Bind("Scope Text", "ScopeWorldTextColor", new Color(0f, 1f, 0f, 1f),
+            ScopeWorldTextColor = Config.Bind("Scope Text", "ScopeWorldTextColor",
+                new Color(1f, 84f / 255f, 58f / 255f, 170f / 255f),
                 Tagged("Text Color", 30, "Color and transparency for the scope-bound text."));
-            ScopeFontSource = Config.Bind("Scope Text", "ScopeFontSource", ScopeRangefinder.ScopeFontSource.GameBender,
+            ScopeFontSource = Config.Bind("Scope Text", "ScopeFontSource", ScopeRangefinder.ScopeFontSource.CustomFont,
                 Tagged("Font", 20,
                     "GameBender is the game's own Bender font, exactly as used by the RAPTAR display and most of the game UI. " +
                     "SystemFont uses the installed OS font selected under System Font Name. " +
@@ -176,7 +177,7 @@ namespace ScopeRangefinder
                     "Installed OS font for the readout, by family name as shown in Windows (e.g. 'Lucida Console') " +
                     "or by file name (e.g. 'lucon.ttf'). Machine-wide and per-user fonts are found. " +
                     "Only used when Font is set to SystemFont."));
-            CustomFontFile = Config.Bind("Scope Text", "CustomFontFile", "",
+            CustomFontFile = Config.Bind("Scope Text", "CustomFontFile", "DigitTech14-Italic.otf",
                 new ConfigDescription(
                     "File name of a .ttf/.otf font or a TMP font asset bundle (filename:assetname) inside " +
                     "BepInEx/plugins/maschine-ScopeRangefinder/fonts/. Only used when Font is set to CustomFont. " +
@@ -207,7 +208,7 @@ namespace ScopeRangefinder
             ScopeTextGlow = Config.Bind(
                 "Scope Text",
                 "ScopeTextGlow",
-                0f,
+                0.1830986f,
                 new ConfigDescription(
                     "Soft glow around the readout text in its own color, like an illuminated display. 0 = off. " +
                     "Requires an SDF font (all fonts except bitmap-baked asset bundles).",
@@ -241,13 +242,14 @@ namespace ScopeRangefinder
                     new AcceptableValueRange<float>(-0.1f, 0.1f),
                     new ConfigurationManagerAttributes { DispName = "Text Vertical Offset", Order = 0 }));
 
-            ScopeWorldBackground = Config.Bind("Scope Background", "ScopeWorldBackground", true,
+            ScopeWorldBackground = Config.Bind("Scope Background", "ScopeWorldBackground", false,
                 Tagged("Enable Background Plate", 30, "Draw a small dark background plate behind the scope-bound readout."));
             ScopeWorldBackgroundWidth = Config.Bind("Scope Background", "ScopeWorldBackgroundWidth", 0.26f,
                 Tagged("Background Width", 20, "Width of the optional scope-bound background plate."));
             ScopeWorldBackgroundHeight = Config.Bind("Scope Background", "ScopeWorldBackgroundHeight", 0.11f,
                 Tagged("Background Height", 10, "Height of the optional scope-bound background plate."));
-            ScopeWorldBackgroundColor = Config.Bind("Scope Background", "ScopeWorldBackgroundColor", new Color(0.03f, 0.10f, 0.03f, 0.35f),
+            ScopeWorldBackgroundColor = Config.Bind("Scope Background", "ScopeWorldBackgroundColor",
+                new Color(0f, 0f, 0f, 41f / 255f),
                 Tagged("Background Color", 0, "Color and transparency for the optional scope-bound background plate."));
 
             AutoZeroEnabled = Config.Bind("Auto Zero", "AutoZeroEnabled", false,
@@ -353,7 +355,20 @@ namespace ScopeRangefinder
                 return;
             }
 
-            if (configExisted && string.IsNullOrEmpty(ConfigVersion.Value))
+            if (!configExisted)
+            {
+                if (StylePresets.IsBuiltin(ShowcaseStylePreset) && StylePresets.Apply(ShowcaseStylePreset))
+                {
+                    SelectedStylePreset.Value = ShowcaseStylePreset;
+                }
+                else
+                {
+                    LogSource.LogError(
+                        $"Showcase style preset '{ShowcaseStylePreset}' is missing from the shipped presets; " +
+                        "fresh install keeps the bind defaults.");
+                }
+            }
+            else if (string.IsNullOrEmpty(ConfigVersion.Value))
             {
                 const string backupName = "My Settings (pre-2.3.0)";
                 if (!StylePresets.IsBuiltin(ShowcaseStylePreset))
