@@ -24,12 +24,17 @@ namespace ScopeRangefinder
             public Texture Atlas;
             public Color TextColor;
             public float Spacing;
-            public bool ZeroLine;
+            public int Rows;
             public float Thickness;
             public float Outline;
             public float Glow;
             public float Aberration;
             public string SampleText;
+            public float TextOffsetY;
+            public bool BackgroundVisible;
+            public float BackgroundWidth;
+            public float BackgroundHeight;
+            public Color BackgroundColor;
 
             public bool Equals(PreviewSignature other)
             {
@@ -37,12 +42,17 @@ namespace ScopeRangefinder
                     && Atlas == other.Atlas
                     && TextColor == other.TextColor
                     && Spacing == other.Spacing
-                    && ZeroLine == other.ZeroLine
+                    && Rows == other.Rows
                     && Thickness == other.Thickness
                     && Outline == other.Outline
                     && Glow == other.Glow
                     && Aberration == other.Aberration
-                    && SampleText == other.SampleText;
+                    && SampleText == other.SampleText
+                    && TextOffsetY == other.TextOffsetY
+                    && BackgroundVisible == other.BackgroundVisible
+                    && BackgroundWidth == other.BackgroundWidth
+                    && BackgroundHeight == other.BackgroundHeight
+                    && BackgroundColor == other.BackgroundColor;
             }
         }
 
@@ -59,6 +69,9 @@ namespace ScopeRangefinder
         private readonly Material[] _previewFringeMaterials = new Material[2];
         private TMP_FontAsset _previewFont;
         private float _nextPreviewRenderTime;
+        private GameObject _previewBackground;
+        private MeshRenderer _previewBackgroundRenderer;
+        private Material _previewBackgroundMaterial;
         internal static void DrawFontPreview(ConfigEntryBase entry)
         {
             _previewRequestedUntil = Time.realtimeSinceStartup + PreviewRequestTimeout;
@@ -94,14 +107,19 @@ namespace ScopeRangefinder
             {
                 Font = font,
                 Atlas = font.material != null ? font.material.mainTexture : null,
-                TextColor = Plugin.ScopeWorldTextColor.Value,
-                Spacing = Plugin.ScopeTextSpacing.Value,
-                ZeroLine = Plugin.ShowZeroLine.Value,
-                Thickness = Plugin.ScopeTextThickness.Value,
-                Outline = Plugin.ScopeTextOutline.Value,
-                Glow = Plugin.ScopeTextGlow.Value,
-                Aberration = Plugin.ScopeTextAberration.Value,
-                SampleText = BuildSampleDistanceText()
+                TextColor = ActiveStyle.TextColor,
+                Spacing = ActiveStyle.TextSpacing,
+                Rows = ConfiguredReadoutRows(),
+                Thickness = ActiveStyle.TextThickness,
+                Outline = ActiveStyle.TextOutline,
+                Glow = ActiveStyle.TextGlow,
+                Aberration = ActiveStyle.TextAberration,
+                SampleText = BuildSampleDistanceText(),
+                TextOffsetY = ActiveStyle.TextOffsetY,
+                BackgroundVisible = ActiveStyle.BackgroundVisible,
+                BackgroundWidth = ActiveStyle.BackgroundWidth,
+                BackgroundHeight = ActiveStyle.BackgroundHeight,
+                BackgroundColor = ActiveStyle.BackgroundColor
             };
             if (_previewRendered && signature.Equals(_renderedPreviewSignature))
             {
@@ -148,6 +166,20 @@ namespace ScopeRangefinder
             _previewText.rectTransform.sizeDelta = new Vector2(4f, 1f);
             _previewRenderer = textObject.GetComponent<MeshRenderer>();
             _previewRenderer.enabled = false;
+            _previewBackground = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            _previewBackground.name = "PreviewBackground";
+            _previewBackground.transform.SetParent(transform, false);
+            Collider backgroundCollider = _previewBackground.GetComponent<Collider>();
+            if (backgroundCollider != null)
+            {
+                Destroy(backgroundCollider);
+            }
+
+            _previewBackgroundRenderer = _previewBackground.GetComponent<MeshRenderer>();
+            _previewBackgroundRenderer.enabled = false;
+            Shader backgroundShader = Shader.Find("GUI/Text Shader") ?? Shader.Find("Unlit/Color");
+            _previewBackgroundMaterial = new Material(backgroundShader);
+            ConfigureReticleDrawMaterial(_previewBackgroundMaterial, 4999);
         }
         private void ApplyPreviewAppearance(TMP_FontAsset font)
         {
@@ -187,7 +219,7 @@ namespace ScopeRangefinder
             {
                 _previewTextMaterial.mainTexture = atlas;
             }
-            Color textColor = Plugin.ScopeWorldTextColor.Value;
+            Color textColor = ActiveStyle.TextColor;
             if (_previewTextMaterial.HasProperty("_FaceColor"))
             {
                 _previewText.color = new Color(1f, 1f, 1f, textColor.a);
@@ -199,20 +231,26 @@ namespace ScopeRangefinder
                 _previewText.color = textColor;
             }
 
-            _previewText.characterSpacing = Plugin.ScopeTextSpacing.Value;
-            _previewText.fontSize = Plugin.ShowZeroLine.Value ? 0.7f : PreviewFontSize;
-            _previewText.alignment = Plugin.ShowZeroLine.Value
+            _previewText.characterSpacing = ActiveStyle.TextSpacing;
+            int previewRows = ConfiguredReadoutRows();
+            _previewText.fontSize = previewRows switch
+            {
+                1 => PreviewFontSize,
+                2 => 0.7f,
+                _ => 0.52f
+            };
+            _previewText.alignment = previewRows > 1
                 ? TextAlignmentOptions.Left
                 : TextAlignmentOptions.Center;
 
             if (_previewTextMaterial.HasProperty("_FaceDilate"))
             {
-                _previewTextMaterial.SetFloat("_FaceDilate", Plugin.ScopeTextThickness.Value);
+                _previewTextMaterial.SetFloat("_FaceDilate", ActiveStyle.TextThickness);
             }
 
             if (_previewTextMaterial.HasProperty("_OutlineWidth"))
             {
-                float outlineWidth = Mathf.Clamp01(Plugin.ScopeTextOutline.Value);
+                float outlineWidth = Mathf.Clamp01(ActiveStyle.TextOutline);
                 _previewTextMaterial.SetFloat("_OutlineWidth", outlineWidth);
                 _previewTextMaterial.SetColor("_OutlineColor", Color.black);
                 if (outlineWidth > 0f)
@@ -225,7 +263,7 @@ namespace ScopeRangefinder
                 }
             }
 
-            float glowStrength = Mathf.Clamp01(Plugin.ScopeTextGlow.Value);
+            float glowStrength = Mathf.Clamp01(ActiveStyle.TextGlow);
             bool glowActive = glowStrength > 0.001f && _previewTextMaterial.HasProperty("_FaceDilate");
             if (glowActive)
             {
@@ -245,12 +283,12 @@ namespace ScopeRangefinder
                         _previewGlowMaterials[i],
                         i,
                         glowStrength,
-                        Plugin.ScopeTextThickness.Value,
-                        Plugin.ScopeWorldTextColor.Value);
+                        ActiveStyle.TextThickness,
+                        ActiveStyle.TextColor);
                 }
             }
 
-            float aberration = Mathf.Clamp01(Plugin.ScopeTextAberration.Value);
+            float aberration = Mathf.Clamp01(ActiveStyle.TextAberration);
             if (aberration > 0.001f && _previewTextMaterial.HasProperty("_FaceDilate"))
             {
                 GlowStyling.GetAberrationFringeColors(textColor, out Color outwardColor, out Color inwardColor);
@@ -267,7 +305,7 @@ namespace ScopeRangefinder
                         fringe.mainTexture = atlas;
                     }
 
-                    fringe.SetFloat("_FaceDilate", Plugin.ScopeTextThickness.Value);
+                    fringe.SetFloat("_FaceDilate", ActiveStyle.TextThickness);
                     fringe.SetFloat("_OutlineWidth", 0f);
                     fringe.DisableKeyword("OUTLINE_ON");
                     Color fringeColor = i == 0 ? outwardColor : inwardColor;
@@ -289,8 +327,13 @@ namespace ScopeRangefinder
 
         private void RenderPreview()
         {
-            float offsetX = Plugin.ShowZeroLine.Value ? -_previewText.textBounds.center.x : 0f;
-            _previewText.transform.position = new Vector3(offsetX, 0f, -1f);
+            int rows = ConfiguredReadoutRows();
+            float scopeToPreview = _previewText.fontSize / ReadoutTmpFontSize;
+            float offsetX = rows > 1 ? -_previewText.textBounds.center.x : 0f;
+            _previewText.transform.position = new Vector3(
+                offsetX,
+                ActiveStyle.TextOffsetY * ScopeCanvasDefaultUiScale * scopeToPreview,
+                -1f);
             _previewText.transform.rotation = Quaternion.identity;
 
             _previewBuffer.Clear();
@@ -301,7 +344,19 @@ namespace ScopeRangefinder
                     -PreviewOrthoHalfHeight, PreviewOrthoHalfHeight,
                     0.01f, 10f));
 
-            if (Plugin.ScopeTextGlow.Value > 0.001f)
+            if (ActiveStyle.BackgroundVisible && _previewBackgroundRenderer != null)
+            {
+                _previewBackgroundMaterial.color = ActiveStyle.BackgroundColor;
+                _previewBackground.transform.position = new Vector3(0f, 0f, -1.001f);
+                _previewBackground.transform.rotation = Quaternion.identity;
+                _previewBackground.transform.localScale = new Vector3(
+                    Mathf.Max(0.05f, ActiveStyle.BackgroundWidth) * ReadoutPlateWidthFactor(rows) * scopeToPreview,
+                    Mathf.Max(0.03f, ActiveStyle.BackgroundHeight) * ReadoutPlateHeightFactor(rows) * scopeToPreview,
+                    1f);
+                _previewBuffer.DrawRenderer(_previewBackgroundRenderer, _previewBackgroundMaterial, 0, 0);
+            }
+
+            if (ActiveStyle.TextGlow > 0.001f)
             {
                 for (int i = _previewGlowMaterials.Length - 1; i >= 0; i--)
                 {
@@ -311,7 +366,7 @@ namespace ScopeRangefinder
                     }
                 }
             }
-            float aberration = Mathf.Clamp01(Plugin.ScopeTextAberration.Value);
+            float aberration = Mathf.Clamp01(ActiveStyle.TextAberration);
             Mesh previewMesh = aberration > 0.001f ? _previewText.mesh : null;
             if (previewMesh != null)
             {
@@ -345,6 +400,19 @@ namespace ScopeRangefinder
             {
                 Destroy(_previewText.gameObject);
                 _previewText = null;
+            }
+
+            if (_previewBackground != null)
+            {
+                Destroy(_previewBackground);
+                _previewBackground = null;
+                _previewBackgroundRenderer = null;
+            }
+
+            if (_previewBackgroundMaterial != null)
+            {
+                Destroy(_previewBackgroundMaterial);
+                _previewBackgroundMaterial = null;
             }
 
             if (_previewTexture != null)

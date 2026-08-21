@@ -26,12 +26,21 @@ namespace ScopeRangefinder
         public static void InvalidateShippedCache()
         {
             _cachedShippedPresets = null;
+            ScopeRangefinderComponent.InvalidateStyleOverrideCache();
         }
 
         private sealed class UserStylesFile
         {
             public int? Version { get; set; }
             public Dictionary<string, Dictionary<string, string>> Styles { get; set; }
+        }
+
+        private const int SharedPresetVersion = 1;
+        private sealed class SharedPresetDocument
+        {
+            public int ScopeRangefinderStyle { get; set; }
+            public string Name { get; set; }
+            public IDictionary<string, string> Values { get; set; }
         }
 
         public static string[] ListPresetNames()
@@ -55,17 +64,254 @@ namespace ScopeRangefinder
         {
             return LoadShippedPresets().ContainsKey(name);
         }
+        internal static bool TryGetPresetValues(string name, out Dictionary<string, string> values)
+        {
+            if (LoadShippedPresets().TryGetValue(name, out values))
+            {
+                return true;
+            }
+
+            return LoadUserStyles().Styles.TryGetValue(name, out values);
+        }
 
         public static bool Apply(string name)
         {
-            if (LoadShippedPresets().TryGetValue(name, out Dictionary<string, string> shippedValues))
+            return TryGetPresetValues(name, out Dictionary<string, string> values)
+                ? ApplyValues(name, values)
+                : ApplyValues(name, null);
+        }
+        public static bool MatchesCurrent(string name)
+        {
+            if (string.IsNullOrEmpty(name)
+                || !TryGetPresetValues(name, out Dictionary<string, string> values)
+                || values == null)
             {
-                return ApplyValues(name, shippedValues);
+                return false;
             }
 
-            return LoadUserStyles().Styles.TryGetValue(name, out Dictionary<string, string> userValues)
-                ? ApplyValues(name, userValues)
-                : ApplyValues(name, null);
+            ConfigFile config = Plugin.ConfigInstance;
+            if (config == null)
+            {
+                return false;
+            }
+
+            foreach (ConfigDefinition definition in new List<ConfigDefinition>(config.Keys))
+            {
+                if (!IsCovered(definition))
+                {
+                    continue;
+                }
+
+                ConfigEntryBase entry = config[definition];
+                object expected = entry.DefaultValue;
+                if (values.TryGetValue($"{definition.Section}.{definition.Key}", out string serialized))
+                {
+                    try
+                    {
+                        expected = TomlTypeConverter.ConvertToValue(serialized, entry.SettingType);
+                        AcceptableValueBase acceptableValues = entry.Description?.AcceptableValues;
+                        if (acceptableValues != null)
+                        {
+                            expected = acceptableValues.Clamp(expected);
+                        }
+                    }
+                    catch
+                    {
+                        expected = entry.DefaultValue;
+                    }
+                }
+                string actualText;
+                string expectedText;
+                try
+                {
+                    actualText = TomlTypeConverter.ConvertToString(entry.BoxedValue, entry.SettingType);
+                    expectedText = TomlTypeConverter.ConvertToString(expected, entry.SettingType);
+                }
+                catch
+                {
+                    return false;
+                }
+
+                if (!string.Equals(actualText, expectedText, StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        public static string ExportToJson(string name, Dictionary<string, string> values)
+        {
+            var document = new SharedPresetDocument
+            {
+                ScopeRangefinderStyle = SharedPresetVersion,
+                Name = name,
+                Values = new SortedDictionary<string, string>(values, StringComparer.OrdinalIgnoreCase)
+            };
+            return JsonConvert.SerializeObject(document, Formatting.Indented);
+        }
+        public static Dictionary<string, string> CaptureCurrentValues()
+        {
+            ConfigFile config = Plugin.ConfigInstance;
+            var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (config == null)
+            {
+                return values;
+            }
+
+            foreach (ConfigDefinition definition in new List<ConfigDefinition>(config.Keys))
+            {
+                if (!IsCovered(definition))
+                {
+                    continue;
+                }
+
+                ConfigEntryBase entry = config[definition];
+                values[$"{definition.Section}.{definition.Key}"] =
+                    TomlTypeConverter.ConvertToString(entry.BoxedValue, entry.SettingType);
+            }
+
+            return values;
+        }
+        public static bool TryCapturePresetValues(string name, out Dictionary<string, string> values)
+        {
+            values = null;
+            if (!TryGetPresetValues(name, out Dictionary<string, string> presetValues) || presetValues == null)
+            {
+                return false;
+            }
+
+            ConfigFile config = Plugin.ConfigInstance;
+            values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (config == null)
+            {
+                return false;
+            }
+
+            foreach (ConfigDefinition definition in new List<ConfigDefinition>(config.Keys))
+            {
+                if (!IsCovered(definition))
+                {
+                    continue;
+                }
+
+                ConfigEntryBase entry = config[definition];
+                string key = $"{definition.Section}.{definition.Key}";
+                values[key] = presetValues.TryGetValue(key, out string serialized)
+                    ? serialized
+                    : TomlTypeConverter.ConvertToString(entry.DefaultValue, entry.SettingType);
+            }
+
+            return true;
+        }
+        public static bool TryImportFromJson(string json, out string importedName, out string error)
+        {
+            importedName = null;
+            error = null;
+            if (string.IsNullOrEmpty(json) || json.IndexOf('{') < 0)
+            {
+                error = "clipboard does not contain a preset";
+                return false;
+            }
+
+            SharedPresetDocument document;
+            try
+            {
+                document = JsonConvert.DeserializeObject<SharedPresetDocument>(json);
+            }
+            catch (Exception exception)
+            {
+                error = "clipboard is not valid preset JSON";
+                Plugin.LogSource?.LogWarning($"Could not parse a shared style preset: {exception.Message}");
+                return false;
+            }
+            if (document == null || document.ScopeRangefinderStyle < SharedPresetVersion)
+            {
+                error = "clipboard is not a ScopeRangefinder style";
+                return false;
+            }
+
+            if (document.Values == null || document.Values.Count == 0)
+            {
+                error = "shared preset contains no settings";
+                return false;
+            }
+
+            ConfigFile config = Plugin.ConfigInstance;
+            if (config == null)
+            {
+                error = "config is not ready";
+                return false;
+            }
+            var accepted = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            int rejected = 0;
+            foreach (ConfigDefinition definition in new List<ConfigDefinition>(config.Keys))
+            {
+                if (!IsCovered(definition))
+                {
+                    continue;
+                }
+
+                string key = $"{definition.Section}.{definition.Key}";
+                if (!document.Values.TryGetValue(key, out string serialized))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    TomlTypeConverter.ConvertToValue(serialized, config[definition].SettingType);
+                    accepted[key] = serialized;
+                }
+                catch (Exception exception)
+                {
+                    rejected++;
+                    Plugin.LogSource?.LogWarning(
+                        $"Shared style preset: dropping invalid value '{serialized}' for {key}: {exception.Message}");
+                }
+            }
+
+            if (accepted.Count == 0)
+            {
+                error = "no usable settings in the shared preset";
+                return false;
+            }
+
+            string baseName = string.IsNullOrWhiteSpace(document.Name)
+                ? "Imported Preset"
+                : document.Name.Trim();
+            string uniqueName = MakeUniqueUserPresetName(baseName);
+
+            UserStylesFile file = LoadUserStyles();
+            file.Styles[uniqueName] = accepted;
+            if (!WriteUserStyles(file))
+            {
+                error = "could not write the preset file";
+                return false;
+            }
+
+            importedName = uniqueName;
+            Plugin.LogSource?.LogInfo(
+                $"Imported shared style preset as '{uniqueName}' ({accepted.Count} settings"
+                + (rejected > 0 ? $", {rejected} invalid dropped" : string.Empty) + ").");
+            return true;
+        }
+
+        private static string MakeUniqueUserPresetName(string baseName)
+        {
+            var taken = new HashSet<string>(ListPresetNames(), StringComparer.OrdinalIgnoreCase);
+            if (!taken.Contains(baseName))
+            {
+                return baseName;
+            }
+            for (int suffix = 2; ; suffix++)
+            {
+                string candidate = $"{baseName} ({suffix})";
+                if (!taken.Contains(candidate))
+                {
+                    return candidate;
+                }
+            }
         }
 
         public static bool SaveCurrent(string name)
@@ -99,6 +345,7 @@ namespace ScopeRangefinder
             }
 
             Plugin.LogSource?.LogInfo($"Saved style preset '{name}'.");
+            ScopeRangefinderComponent.InvalidateStyleOverrideCache();
             return true;
         }
 
@@ -121,6 +368,7 @@ namespace ScopeRangefinder
             }
 
             Plugin.LogSource?.LogInfo($"Deleted style preset '{name}'.");
+            ScopeRangefinderComponent.InvalidateStyleOverrideCache();
             return true;
         }
 

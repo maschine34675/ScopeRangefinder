@@ -48,9 +48,9 @@ namespace ScopeRangefinder
 
         public static Font LoadRangefinderFont()
         {
-            ScopeFontSource source = Plugin.ScopeFontSource?.Value ?? ScopeFontSource.SystemFont;
+            ScopeFontSource source = ActiveStyle.FontSource;
             string fontKey = source == ScopeFontSource.SystemFont
-                ? "system:" + (Plugin.ScopeFontName?.Value ?? "Consolas")
+                ? "system:" + (ActiveStyle.FontName)
                 : source.ToString();
 
             if (_cachedFont != null && string.Equals(_cachedFontKey, fontKey, StringComparison.OrdinalIgnoreCase))
@@ -83,15 +83,15 @@ namespace ScopeRangefinder
         }
         public static TMP_FontAsset LoadRangefinderTmpFont()
         {
-            ScopeFontSource source = Plugin.ScopeFontSource?.Value ?? ScopeFontSource.SystemFont;
+            ScopeFontSource source = ActiveStyle.FontSource;
             string fontKey;
             switch (source)
             {
                 case ScopeFontSource.SystemFont:
-                    fontKey = "system:" + (Plugin.ScopeFontName?.Value ?? "Consolas");
+                    fontKey = "system:" + (ActiveStyle.FontName);
                     break;
                 case ScopeFontSource.CustomFont:
-                    fontKey = "custom:" + (Plugin.CustomFontFile?.Value ?? string.Empty);
+                    fontKey = "custom:" + (ActiveStyle.CustomFontFile ?? string.Empty);
                     break;
                 default:
                     fontKey = "game";
@@ -147,7 +147,7 @@ namespace ScopeRangefinder
 
         private static TMP_FontAsset CreateSystemTmpFont()
         {
-            string sourceName = Plugin.ScopeFontName?.Value ?? "Consolas";
+            string sourceName = ActiveStyle.FontName;
             if (_systemTmpFonts.TryGetValue(sourceName, out TMP_FontAsset cachedFont) && cachedFont != null)
             {
                 return cachedFont;
@@ -182,7 +182,7 @@ namespace ScopeRangefinder
         }
         private static TMP_FontAsset LoadCustomTmpFont()
         {
-            string fontSpec = Plugin.CustomFontFile?.Value?.Trim();
+            string fontSpec = ActiveStyle.CustomFontFile?.Trim();
             if (string.IsNullOrEmpty(fontSpec))
             {
                 return null;
@@ -558,7 +558,7 @@ namespace ScopeRangefinder
 
         public static string[] GetPreferredOsFontNames()
         {
-            string configuredFontName = Plugin.ScopeFontName?.Value;
+            string configuredFontName = ActiveStyle.FontName;
             if (string.IsNullOrWhiteSpace(configuredFontName))
             {
                 return FallbackOsFontNames;

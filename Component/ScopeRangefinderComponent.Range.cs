@@ -14,7 +14,7 @@ namespace ScopeRangefinder
 
             if (_usingMainCameraScope)
             {
-                _lastRaycastHit = TryMeasurePiPDistance(
+                _lastRaycastHit = TryMeasureMainCameraDistance(
                     origin,
                     direction,
                     maxDistance,
@@ -22,21 +22,35 @@ namespace ScopeRangefinder
                     player,
                     out _lastMeasuredDistance,
                     out _lastHitNormal);
+            }
+            else
+            {
+                _lastRaycastHit = Physics.Raycast(
+                    origin,
+                    direction,
+                    out RaycastHit hit,
+                    maxDistance,
+                    RaycastMask,
+                    QueryTriggerInteraction.Ignore);
+                _lastMeasuredDistance = _lastRaycastHit ? hit.distance : 0f;
+                _lastHitNormal = _lastRaycastHit ? hit.normal : Vector3.up;
+            }
+
+            PublishMeasurementToApi();
+        }
+        private void PublishMeasurementToApi()
+        {
+            if (_lastRaycastHit && _lastMeasuredDistance > 0f)
+            {
+                RangefinderApi.LastMeasuredDistanceMeters = _lastMeasuredDistance;
+                RangefinderApi.LastMeasurementTime = Time.time;
                 return;
             }
 
-            _lastRaycastHit = Physics.Raycast(
-                origin,
-                direction,
-                out RaycastHit hit,
-                maxDistance,
-                RaycastMask,
-                QueryTriggerInteraction.Ignore);
-            _lastMeasuredDistance = _lastRaycastHit ? hit.distance : 0f;
-            _lastHitNormal = _lastRaycastHit ? hit.normal : Vector3.up;
+            RangefinderApi.LastMeasuredDistanceMeters = 0f;
         }
 
-        private static bool TryMeasurePiPDistance(
+        private static bool TryMeasureMainCameraDistance(
             Vector3 cameraOrigin,
             Vector3 aimDirection,
             float maxDistance,
@@ -59,7 +73,7 @@ namespace ScopeRangefinder
                 return false;
             }
 
-            if (cameraHit.distance >= PiPUnreliableHitDistance)
+            if (cameraHit.distance >= MainCameraUnreliableHitDistance)
             {
                 distance = cameraHit.distance;
                 hitNormal = cameraHit.normal;
@@ -101,7 +115,7 @@ namespace ScopeRangefinder
                         return true;
                     }
 
-                    if (Mathf.Abs(fireportHit.distance - cameraHit.distance) <= PiPCloseHitAgreement)
+                    if (Mathf.Abs(fireportHit.distance - cameraHit.distance) <= MainCameraCloseHitAgreement)
                     {
                         distance = cameraHit.distance;
                         hitNormal = cameraHit.normal;

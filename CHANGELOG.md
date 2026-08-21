@@ -1,5 +1,36 @@
 # Changelog
-## 3.0.0 (in development)
+## 3.2.0
+
+### Added
+
+- Shipped layout presets now cover every magnified optic in the game (46 scopes, up from 31): the PSO-1 family, PU, 1P59/1P69/1P78, USP-1, Pilad 4x32, NSPU-M, ECHO1, and the 1.5x assault optics of the AUG, G36 and HKV carry handles all get a tuned default position.
+- Non-magnified sights can now show the readout too, listed by template ID under `Activation > NonMagnifiedSights`. They have no optic camera, so they render through the screen overlay and are positioned per sight with the layout editor (F8); shipped in-scope layouts deliberately do not apply. The default is the Milkor M2A1 reflex sight, so a grenade launcher aimed through it produces a measured distance — both on the readout and for other mods reading `RangefinderApi`. An empty list restores the previous behavior of magnified optics only.
+- Added a small public API for other mods, `ScopeRangefinder.RangefinderApi`, with the last measured distance in meters and the `Time.time` of that measurement. It lets distance-based mechanics in other mods use the exact measured range instead of the sight's zeroing steps — the first consumer is ClusterGrenade's 40mm airburst round. Readable by reflection, so consumers need no hard dependency; the names and types are a stable contract. The distance is `0` whenever there is no valid measurement, and consumers decide for themselves how fresh a measurement has to be. See the README for details.
+
+- Style presets can now be assigned per scope: the rangefinder editor's preset browser has an `Only this scope` mode that assigns the chosen preset to the current scope, previewed live and written by the editor's `Save`. The assignment is applied as a resolved override while aiming through that scope — the global style and the `.cfg` stay untouched. Useful together with the ballistics line: an mrad preset for mrad/FFP reticles (e.g. the PM II), a centimeters preset elsewhere. Stored as an optional `StylePreset` field in `ScopeRangefinder.layouts.json`; existing layout files keep working unchanged, and a missing preset name falls back to the global style with a log warning.
+
+- Style presets can now be shared: `Copy` next to the global style puts the current look on the clipboard as a readable JSON block (unsaved tweaks included), `Copy` on a preset row copies that preset (own presets only — shipped ones need no sharing), and `Paste Shared Preset` imports one as a new user preset. Imports never overwrite an existing or shipped preset (they get a free name like `My Preset (2)`) and are validated setting by setting against the running version, so unknown keys or invalid values from a foreign or newer file are dropped with a log note instead of reaching the config.
+
+### Fixed
+
+- The readout block no longer twitches sideways by a few pixels on segment-display fonts (DSEG7 and friends) when a value changes, which the ballistics line made easy to see. Its centering used to be derived from the rendered glyph bounds, and those fonts vary strongly in ink width per digit, so the derived character width came out slightly different depending on which digits sat at the edges. The block is now measured once from the widest text the configuration can produce and keeps that position until the configuration changes.
+
+- The auto zero hotkey (and the editor hotkey) now also work while moving. BepInEx' shortcut check only fires when no other keyboard key is held, so the hotkey was dead while walking, sprinting, or holding anything else — precisely when you want to zero on a moving target. Mouse buttons were never affected, which is why it looked like it worked in place and failed on the move. The auto zero hotkey is additionally ignored while a text field of the editor has the keyboard, so typing its letter no longer re-zeroes the optic.
+
+### Changed
+
+- Styling now has a single home: the F8 window (renamed `Scope Rangefinder Editor`) contains the preset browser (`Apply to all scopes` / `Only this scope`), the live readout preview, the font picker, and every Readout / Scope Text / Scope Background option as direct controls — no more two menus that both "somehow" change the look. The F12 settings menu keeps only General, Activation, Auto Zero, and Developer; the style entries stay in the `.cfg` under their unchanged keys, so existing configs and presets keep working. While the current scope shows an assigned preset, the editor says so explicitly instead of the global options silently editing a hidden look, and the preview now always renders exactly what the scope shows.
+- Clearer editor structure: the applied preset shows `(modified)` behind its name as soon as its values no longer match it, so a tuned look is never mistaken for the plain preset. `Save`/`Reset` are now named `Save Scope`/`Reset Scope` and sit directly under the layout parameters they belong to (they only ever write the current scope's entry), with `Close` alone at the bottom. Each foldout's content is boxed and indented, so it is obvious which options belong to it, and the font file picker expands into the full file list again — one click selects a font and switches the font source, with the `bundle:asset` field kept inside the same drawer.
+
+## 3.1.0
+
+### Added
+
+- All readout rows now share one prefix column: prefixes are padded to the widest one in use, so `DIAL` no longer pushes its value a character further right than the three-letter `RNG`/`ZRO`/`HLD` rows.
+- The readout block no longer shifts sideways when a value changes length (a hold value appearing or disappearing, `auto` versus a distance): it is centered on the widest line the current configuration can produce instead of the current one.
+- Added a ballistics line (`Ballistics Line`, off by default): a third readout row with a firing solution for the loaded round at the measured distance, computed with the game's own ballistics (ammo, weapon mods, and drag all included). `Hold` shows the vertical hold versus the sight line the game currently applies (positive = hold above the target, mil-turret convention; units: milliradians, MOA, or centimeters at the measured distance via `Hold Unit`). `Dial` recommends the best zeroing stop of the active sight plus the residual hold at that stop — picked in the angular domain, so it stays correct when the loaded round differs from the ammo the dial was calibrated with. While auto zero drives the calibration, the dial recommendation gives way to the (then near-zero) hold readout. The plate, the fallback overlay, and the settings preview grow with the third row.
+
+## 3.0.0
 
 ### Changed
 
@@ -75,7 +106,7 @@
   - `Hotkey` (default): pressing `AutoZeroHotkey` (default `J`) zeroes once to the currently measured distance. The zero persists across unscoping until re-pressed, the zeroing dial is used manually, or the sight changes.
   - `Continuous`: the optic follows the measured distance while aiming; the original zeroing is restored on unscope.
 - Added a smooth zeroing transition (`AutoZeroTransitionTime`, default `0.35`s): on larger distance jumps the view eases to the new zero instead of snapping. `0` restores the hard jump.
-- Added an optional predicted bullet trajectory preview (`ShowTrajectoryPreview`), a good way to build an intuitive feel for Tarkov's ballistics: bullet drop, travel time, and real dispersion at range. The line follows the measured distance and ends at the target, fading from a transparent near color to an opaque far color and widening with distance so the arc stays readable when viewed from behind the weapon.
+- Added an optional predicted bullet trajectory preview (`ShowTrajectoryPreview`), a good way to build an intuitive feel for Tushonka's ballistics: bullet drop, travel time, and real dispersion at range. The line follows the measured distance and ends at the target, fading from a transparent near color to an opaque far color and widening with distance so the arc stays readable when viewed from behind the weapon.
 - Added a dispersion ring at the trajectory impact point (`AutoZeroImpactSpreadCircle`): shows the maximum shot spread at the measured distance using the game's own formula (weapon accuracy, barrel durability, ammo factor, buffs, overheat). The cone is projected onto the hit surface (a circle on flat walls, a stretched ellipse on oblique surfaces) and drawn with a permanent depth test, so it can never be swallowed by the surface it sits on.
 - Added AutoRanging compatibility: when the AutoRanging mod is installed, its ranging is automatically paused while `AutoZeroEnabled` is on, since the two mods would otherwise fight over the sight zeroing. AutoRanging keeps working normally whenever auto zero is off.
 - Verified compatibility with BetterZeroing and ExtendedZeroRanges. Auto zero makes all three of AutoRanging, BetterZeroing, and ExtendedZeroRanges unnecessary, since it already zeroes more precisely than any of them; all three remain compatible if kept installed. Auto zero no longer restores a stale backup when the game or a mod regenerates the sight calibration points (for example on ammo changes with BetterZeroing installed) — it re-reads the regenerated values instead.

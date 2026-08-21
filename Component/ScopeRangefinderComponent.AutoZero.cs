@@ -144,8 +144,8 @@ namespace ScopeRangefinder
                 RestoreAutoZero(weaponAnimation);
                 return;
             }
-
-            if (Plugin.AutoZeroHotkey.Value.IsDown()
+            if (!BlocksGameKeyboardInput
+                && HotkeyInput.IsDownIgnoringOtherKeys(Plugin.AutoZeroHotkey.Value)
                 && hasMeasurement
                 && TryCalculateCalibrationPoint(weapon, ammo, distance, out Vector3 calibrationPoint))
             {
@@ -336,7 +336,7 @@ namespace ScopeRangefinder
             ScopeRangefinderComponent instance = _activeInstance;
             return instance != null
                 && Plugin.Enabled.Value
-                && Plugin.ShowZeroLine.Value
+                && ActiveStyle.ShowZeroLine
                 && (instance._opticDisplayVisible || instance._overlayDisplayVisible);
         }
         internal static bool TryGetZeroingPanelText(out string panelText)

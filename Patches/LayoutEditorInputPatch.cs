@@ -10,7 +10,17 @@ namespace ScopeRangefinder
         [HarmonyPrefix]
         private static void PatchPrefix(List<ECommand> commands)
         {
-            if (!ScopeRangefinderComponent.BlocksGameMouseInput || commands == null)
+            if (commands == null)
+            {
+                return;
+            }
+            if (ScopeRangefinderComponent.BlocksGameKeyboardInput)
+            {
+                commands.Clear();
+                return;
+            }
+
+            if (!ScopeRangefinderComponent.BlocksGameMouseInput)
             {
                 return;
             }

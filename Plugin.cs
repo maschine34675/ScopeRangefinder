@@ -16,8 +16,9 @@ namespace ScopeRangefinder
     {
         public const string PluginGuid = "com.maschine.ScopeRangefinder";
         public const string PluginName = "maschine-ScopeRangefinder";
-        public const string PluginVersion = "3.0.0";
+        public const string PluginVersion = "3.2.0";
         public const string PiPDisablerGuid = "com.fiodor.pipdisabler";
+        private const string MilkorReflexSightTemplateId = "6284bd5f95250a29bc628a30";
 
         public static ManualLogSource LogSource;
         public static bool PiPDisablerLoaded;
@@ -29,6 +30,8 @@ namespace ScopeRangefinder
         public static ConfigEntry<bool> ShowUnitSuffix;
         public static ConfigEntry<string> NoDistanceText;
         public static ConfigEntry<bool> ShowZeroLine;
+        public static ConfigEntry<BallisticsLineMode> BallisticsLine;
+        public static ConfigEntry<HoldUnit> BallisticsHoldUnit;
         public static ConfigEntry<string> RangeLinePrefix;
         public static ConfigEntry<string> ZeroLinePrefix;
         public static ConfigEntry<float> MinZoomBlendFactor;
@@ -58,6 +61,7 @@ namespace ScopeRangefinder
         public static ConfigEntry<bool> AutoZeroImpactSpreadCircle;
         public static ConfigEntry<Color> AutoZeroSpreadCircleColor;
         public static ConfigEntry<KeyboardShortcut> LayoutEditorToggle;
+        public static ConfigEntry<string> NonMagnifiedSights;
         public static ConfigEntry<bool> RequireWilcoxRaptar;
         public static ConfigEntry<bool> RequireWilcoxRaptarActive;
         public static ConfigEntry<bool> LogLoadedFonts;
@@ -87,18 +91,12 @@ namespace ScopeRangefinder
                 Tagged("Enable Mod", 20, "Show distance readout while aiming through an optic scope."));
             SelectedStylePreset = Config.Bind("General", "StylePreset", "",
                 new ConfigDescription(
-                    "Named looks covering all Readout, Scope Text, and Scope Background settings. " +
-                    "Picking a preset applies it immediately; the current look can be saved under a new name. " +
-                    "Shipped presets live in ScopeRangefinder.presets.json (replaced on update); " +
-                    "presets you save land in ScopeRangefinder.styles.json, which updates never touch.",
+                    "Last style preset applied to the global style. Presets are browsed and applied from the " +
+                    "in-game rangefinder editor (F8). Shipped presets live in ScopeRangefinder.presets.json " +
+                    "(replaced on update); presets you save land in ScopeRangefinder.styles.json, which updates " +
+                    "never touch.",
                     null,
-                    new ConfigurationManagerAttributes
-                    {
-                        DispName = "Style Preset",
-                        Order = 15,
-                        HideDefaultButton = true,
-                        CustomDrawer = StylePresetDrawer.Draw
-                    }));
+                    new ConfigurationManagerAttributes { Browsable = false }));
             Config.Bind("General", "ResetAllSettings", false,
                 new ConfigDescription(
                     "Resets every setting of this mod to its default value. Requires a confirming second click.",
@@ -123,134 +121,128 @@ namespace ScopeRangefinder
             MinDisplayDistance = Config.Bind("Activation", "MinDisplayDistance", 0f,
                 Tagged("Minimum Distance To Activate (m)", 25,
                     "Only show the readout when the target is at least this many meters away. 0 = use zoom activation instead (e.g. 50 for 50m)."));
+            NonMagnifiedSights = Config.Bind(
+                "Activation",
+                "NonMagnifiedSights",
+                MilkorReflexSightTemplateId,
+                Tagged("Non-Magnified Sights", 10,
+                    "Comma-separated item template IDs of non-magnified sights (red dots, holographics) that " +
+                    "should also show the readout. They have no optic camera, so they use the screen overlay — " +
+                    "position it per sight with the layout editor (F8). " +
+                    "Default is the Milkor M2A1 reflex sight, so a grenade launcher aimed through it produces a " +
+                    "measured distance other mods can read. Empty = magnified optics only."));
             RequireWilcoxRaptar = Config.Bind("Activation", "RequireWilcoxRaptar", false,
-                Tagged("Require Wilcox RAPTAR Attached", 10,
+                Tagged("Require Wilcox RAPTAR Attached", 5,
                     "Only show the readout when the current weapon has a Wilcox RAPTAR ES Tactical Rangefinder attached."));
             RequireWilcoxRaptarActive = Config.Bind("Activation", "RequireWilcoxRaptarActive", true,
                 Tagged("Require RAPTAR Switched On", 0,
                     "When RequireWilcoxRaptar is enabled, also require the attached RAPTAR tactical device to be switched on."));
 
             DistanceUnit = Config.Bind("Readout", "DistanceUnit", ScopeRangefinder.DistanceUnit.Meters,
-                Tagged("Distance Unit", 15,
+                HiddenStyleEntry(
                     "Unit for the displayed distance, like the unit toggle on real rangefinders. " +
                     "Auto zero always works on the true metric distance regardless of this setting."));
             ShowUnitSuffix = Config.Bind("Readout", "ShowUnitSuffix", true,
-                Tagged("Show Unit Suffix", 12,
+                HiddenStyleEntry(
                     "Append the unit to the readout (e.g. 0123m / 0135yd). The vanilla RAPTAR shows bare digits."));
             UseDecimalFormat = Config.Bind("Readout", "UseDecimalFormat", false,
-                Tagged("Use Decimal Format (045.0)", 10, "Use 000.0 format (Vortex-style) instead of 4-digit meters (RAPTAR-style)."));
+                HiddenStyleEntry("Use 000.0 format (Vortex-style) instead of 4-digit meters (RAPTAR-style)."));
             ShowZeroLine = Config.Bind("Readout", "ShowZeroLine", true,
-                Tagged("Show Zeroing Line", 8,
+                HiddenStyleEntry(
                     "Second readout line showing the currently effective zero: the auto-zeroed distance, " +
                     "'auto' in continuous mode, or the sight's dial distance when auto zero is off. " +
                     "The background plate grows automatically."));
+            BallisticsLine = Config.Bind("Readout", "BallisticsLine", BallisticsLineMode.Off,
+                HiddenStyleEntry(
+                    "Third readout row with a firing solution for the loaded round at the measured distance. " +
+                    "Hold shows the vertical hold versus the current dial zero (positive = hold above the target, like mil turrets); " +
+                    "Dial recommends the best zeroing stop of the active sight plus the residual hold at that stop. " +
+                    "Computed with the game's own ballistics, so ammo, weapon mods, and drag are all accounted for."));
+            BallisticsHoldUnit = Config.Bind("Readout", "BallisticsHoldUnit", HoldUnit.Milliradians,
+                HiddenStyleEntry(
+                    "Unit for hold values on the ballistics line: milliradians (no suffix, mil-turret convention), " +
+                    "minutes of angle, or centimeters at the measured distance."));
             RangeLinePrefix = Config.Bind("Readout", "RangeLinePrefix", "RNG",
-                Tagged("Range Line Prefix", 6,
+                HiddenStyleEntry(
                     "Prefix for the measured distance line when the zeroing line is shown. Empty = no prefix."));
             ZeroLinePrefix = Config.Bind("Readout", "ZeroLinePrefix", "ZRO",
-                Tagged("Zeroing Line Prefix", 4,
-                    "Prefix for the zeroing line. Empty = no prefix."));
+                HiddenStyleEntry("Prefix for the zeroing line. Empty = no prefix."));
             NoDistanceText = Config.Bind("Readout", "NoDistanceText", "----",
-                Tagged("No-Target Text", 0, "Text shown when no valid target is hit."));
-
-            Config.Bind("Scope Text", "FontPreview", false,
-                new ConfigDescription(
-                    "Live preview of the readout with the current font, color, thickness, spacing, and glow.",
-                    null,
-                    new ConfigurationManagerAttributes
-                    {
-                        DispName = "Preview",
-                        Order = 50,
-                        HideDefaultButton = true,
-                        CustomDrawer = ScopeRangefinderComponent.DrawFontPreview
-                    }));
+                HiddenStyleEntry("Text shown when no valid target is hit."));
             ScopeWorldTextColor = Config.Bind("Scope Text", "ScopeWorldTextColor",
                 new Color(1f, 84f / 255f, 58f / 255f, 170f / 255f),
-                Tagged("Text Color", 30, "Color and transparency for the scope-bound text."));
+                HiddenStyleEntry("Color and transparency for the scope-bound text."));
             ScopeFontSource = Config.Bind("Scope Text", "ScopeFontSource", ScopeRangefinder.ScopeFontSource.CustomFont,
-                Tagged("Font", 20,
+                HiddenStyleEntry(
                     "GameBender is the game's own Bender font, exactly as used by the RAPTAR display and most of the game UI. " +
-                    "SystemFont uses the installed OS font selected under System Font Name. " +
-                    "CustomFont loads the file selected under Custom Font File from the plugin's fonts folder."));
+                    "SystemFont uses the installed OS font selected under ScopeFontName. " +
+                    "CustomFont loads the file selected under CustomFontFile from the plugin's fonts folder."));
             ScopeFontName = Config.Bind("Scope Text", "ScopeFontName", "Consolas",
-                Tagged("System Font Name", 10,
+                HiddenStyleEntry(
                     "Installed OS font for the readout, by family name as shown in Windows (e.g. 'Lucida Console') " +
                     "or by file name (e.g. 'lucon.ttf'). Machine-wide and per-user fonts are found. " +
-                    "Only used when Font is set to SystemFont."));
+                    "Only used when ScopeFontSource is set to SystemFont."));
             CustomFontFile = Config.Bind("Scope Text", "CustomFontFile", "DigitTech14-Italic.otf",
-                new ConfigDescription(
+                HiddenStyleEntry(
                     "File name of a .ttf/.otf font or a TMP font asset bundle (filename:assetname) inside " +
-                    "BepInEx/plugins/maschine-ScopeRangefinder/fonts/. Only used when Font is set to CustomFont. " +
-                    "Picking a font from the list below switches the font source automatically.",
-                    null,
-                    new ConfigurationManagerAttributes
-                    {
-                        DispName = "Custom Font File",
-                        Order = 8,
-                        CustomDrawer = FontPickerDrawer.Draw
-                    }));
+                    "BepInEx/plugins/maschine-ScopeRangefinder/fonts/. Only used when ScopeFontSource is set to CustomFont. " +
+                    "Picking a font in the rangefinder editor (F8) switches the font source automatically."));
             ScopeTextThickness = Config.Bind(
                 "Scope Text",
                 "ScopeTextThickness",
                 0f,
-                new ConfigDescription(
+                HiddenStyleEntry(
                     "Stroke weight of the readout text. Negative = thinner, positive = bolder.",
-                    new AcceptableValueRange<float>(-0.4f, 0.4f),
-                    new ConfigurationManagerAttributes { DispName = "Text Thickness", Order = 15 }));
+                    new AcceptableValueRange<float>(-0.4f, 0.4f)));
             ScopeTextSpacing = Config.Bind(
                 "Scope Text",
                 "ScopeTextSpacing",
                 0f,
-                new ConfigDescription(
+                HiddenStyleEntry(
                     "Extra spacing between characters. Useful for fonts with tight digit cells, like 7-segment fonts.",
-                    new AcceptableValueRange<float>(-10f, 40f),
-                    new ConfigurationManagerAttributes { DispName = "Letter Spacing", Order = 14 }));
+                    new AcceptableValueRange<float>(-10f, 40f)));
             ScopeTextGlow = Config.Bind(
                 "Scope Text",
                 "ScopeTextGlow",
                 0.1830986f,
-                new ConfigDescription(
+                HiddenStyleEntry(
                     "Soft glow around the readout text in its own color, like an illuminated display. 0 = off. " +
                     "Requires an SDF font (all fonts except bitmap-baked asset bundles).",
-                    new AcceptableValueRange<float>(0f, 1f),
-                    new ConfigurationManagerAttributes { DispName = "Text Glow", Order = 13 }));
+                    new AcceptableValueRange<float>(0f, 1f)));
             ScopeTextOutline = Config.Bind(
                 "Scope Text",
                 "ScopeTextOutline",
                 0f,
-                new ConfigDescription(
+                HiddenStyleEntry(
                     "Black outline around the glyphs, for contrast against bright backgrounds. 0 = off. " +
                     "Requires an SDF font (all fonts except bitmap-baked asset bundles).",
-                    new AcceptableValueRange<float>(0f, 0.4f),
-                    new ConfigurationManagerAttributes { DispName = "Black Outline", Order = 12 }));
+                    new AcceptableValueRange<float>(0f, 0.4f)));
             ScopeTextAberration = Config.Bind(
                 "Scope Text",
                 "ScopeTextAberration",
                 0f,
-                new ConfigDescription(
+                HiddenStyleEntry(
                     "Chromatic aberration: color fringes on the readout, displaced in opposite directions along the " +
                     "radial axis from the scope center, like real lens dispersion. Fringe hues follow the text color " +
                     "(its spectral neighbors; red/cyan for white text). 0 = off. Requires an SDF font.",
-                    new AcceptableValueRange<float>(0f, 1f),
-                    new ConfigurationManagerAttributes { DispName = "Chromatic Aberration", Order = 11 }));
+                    new AcceptableValueRange<float>(0f, 1f)));
             ScopeWorldTextOffsetY = Config.Bind(
                 "Scope Text",
                 "ScopeWorldTextOffsetY",
                 0.004f,
-                new ConfigDescription(
+                HiddenStyleEntry(
                     "Vertical text offset inside the background plate. Useful because different fonts sit at different visual heights.",
-                    new AcceptableValueRange<float>(-0.1f, 0.1f),
-                    new ConfigurationManagerAttributes { DispName = "Text Vertical Offset", Order = 0 }));
+                    new AcceptableValueRange<float>(-0.1f, 0.1f)));
 
             ScopeWorldBackground = Config.Bind("Scope Background", "ScopeWorldBackground", false,
-                Tagged("Enable Background Plate", 30, "Draw a small dark background plate behind the scope-bound readout."));
+                HiddenStyleEntry("Draw a small dark background plate behind the scope-bound readout."));
             ScopeWorldBackgroundWidth = Config.Bind("Scope Background", "ScopeWorldBackgroundWidth", 0.26f,
-                Tagged("Background Width", 20, "Width of the optional scope-bound background plate."));
+                HiddenStyleEntry("Width of the optional scope-bound background plate."));
             ScopeWorldBackgroundHeight = Config.Bind("Scope Background", "ScopeWorldBackgroundHeight", 0.11f,
-                Tagged("Background Height", 10, "Height of the optional scope-bound background plate."));
+                HiddenStyleEntry("Height of the optional scope-bound background plate."));
             ScopeWorldBackgroundColor = Config.Bind("Scope Background", "ScopeWorldBackgroundColor",
                 new Color(0f, 0f, 0f, 41f / 255f),
-                Tagged("Background Color", 0, "Color and transparency for the optional scope-bound background plate."));
+                HiddenStyleEntry("Color and transparency for the optional scope-bound background plate."));
 
             AutoZeroEnabled = Config.Bind("Auto Zero", "AutoZeroEnabled", false,
                 Tagged("Enable Auto Zero", 80,
@@ -279,7 +271,7 @@ namespace ScopeRangefinder
             ShowTrajectoryPreview = Config.Bind("Auto Zero", "ShowTrajectoryPreview", false,
                 Tagged("Show Trajectory & Impact Preview", 40,
                     "Draw the predicted bullet trajectory up to the measured distance, a great way to build an intuitive feel for " +
-                    "Tarkov's ballistics: bullet drop, travel time, and the real dispersion at range."));
+                    "Tushonka's ballistics: bullet drop, travel time, and the real dispersion at range."));
             AutoZeroTrajectoryNearColor = Config.Bind("Auto Zero", "AutoZeroTrajectoryNearColor", new Color(0f, 1f, 0.25f, 0.02f),
                 Tagged("Trajectory Color (Near)", 30,
                     "Trajectory color at the muzzle. Keep the alpha low so the near segments do not block the view downrange."));
@@ -297,7 +289,9 @@ namespace ScopeRangefinder
                 "General",
                 "ToggleEditor",
                 new KeyboardShortcut(KeyCode.F8),
-                Tagged("Toggle Layout Editor", 5, "Hotkey to show or hide the in-game scope layout editor."));
+                Tagged("Toggle Rangefinder Editor", 5,
+                    "Hotkey to show or hide the in-game rangefinder editor: per-scope layout, " +
+                    "style presets, and all style options."));
 
             LogScopeKeys = Config.Bind(
                 "Developer",
@@ -394,6 +388,15 @@ namespace ScopeRangefinder
                 description,
                 null,
                 new ConfigurationManagerAttributes { DispName = displayName, Order = order });
+        }
+        private static ConfigDescription HiddenStyleEntry(
+            string description,
+            AcceptableValueBase acceptableValues = null)
+        {
+            return new ConfigDescription(
+                description,
+                acceptableValues,
+                new ConfigurationManagerAttributes { Browsable = false });
         }
 
         private static bool TryRemoveLegacyRootDll()

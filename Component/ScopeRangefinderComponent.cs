@@ -1,6 +1,7 @@
 using EFT;
 using EFT.Animations;
 using EFT.CameraControl;
+using EFT.InventoryLogic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
@@ -11,8 +12,8 @@ namespace ScopeRangefinder
     {
         private const int OverlaySortingOrder = 30000;
         private const float RayStartOffset = 0.1f;
-        private const float PiPUnreliableHitDistance = 5f;
-        private const float PiPCloseHitAgreement = 0.75f;
+        private const float MainCameraUnreliableHitDistance = 5f;
+        private const float MainCameraCloseHitAgreement = 0.75f;
         private const float ScopeCanvasDefaultUiScale = 0.7f;
         private const float ScopeCanvasScaleSensitivity = 14f;
         private const float ScopeCanvasMinUiScale = 0.25f;
@@ -57,13 +58,23 @@ namespace ScopeRangefinder
             ResetAndHide();
         }
 
+        private void OnDisable()
+        {
+            RangefinderApi.LastMeasuredDistanceMeters = 0f;
+        }
+
         private void OnDestroy()
         {
+            FlushStyleEditsNow();
             RestoreAutoZero(_activeWeaponAnimation);
+            ActiveStyle.ClearOverride();
+            RangefinderApi.LastMeasuredDistanceMeters = 0f;
             DestroyTrajectoryVisualization();
             DestroyReticleReadoutDisplay();
             DestroyFontPreview();
             RestoreLayoutEditorCursor();
+            BlocksGameMouseInput = false;
+            BlocksGameKeyboardInput = false;
             if (_activeInstance == this)
             {
                 _activeInstance = null;
@@ -95,11 +106,15 @@ namespace ScopeRangefinder
             _activeScopeCamera = scopeCamera;
             _activeOpticSight = currentOpticSight;
             _activeWeaponAnimation = weaponAnimation;
+            _activeWeapon = (player.HandsController as Player.FirearmController)?.Item as Weapon;
             _currentLayoutKey = ResolveScopeLayoutKey(currentOpticSight, weaponAnimation);
             if (_usingMainCameraScope && !string.IsNullOrEmpty(_currentLayoutKey))
             {
                 _currentLayoutKey = OverlayLayoutKeyPrefix + _currentLayoutKey;
             }
+
+            UpdateStyleOverride();
+            LogLayoutKeyOnce(_currentLayoutKey);
 
             if (!_isScoped)
             {
@@ -171,6 +186,61 @@ namespace ScopeRangefinder
             SyncReticleCommandBufferDisplay(scopeCamera, currentOpticSight, weaponAnimation);
         }
 
+        private string _styleOverrideLayoutKey;
+        private string _styleOverridePresetName;
+        private string _styleOverrideMissingLogged;
+        private void UpdateStyleOverride()
+        {
+            string layoutKey = _currentLayoutKey;
+            string presetName = string.IsNullOrEmpty(layoutKey)
+                ? null
+                : GetLayoutForDisplay(layoutKey)?.StylePreset;
+
+            if (string.IsNullOrEmpty(presetName))
+            {
+                ActiveStyle.ClearOverride();
+                _styleOverrideLayoutKey = layoutKey;
+                _styleOverridePresetName = null;
+                return;
+            }
+
+            if (_styleOverrideLayoutKey == layoutKey
+                && _styleOverridePresetName == presetName
+                && ActiveStyle.HasOverride)
+            {
+                return;
+            }
+
+            if (StyleSnapshot.TryFromPreset(presetName, out StyleSnapshot snapshot))
+            {
+                ActiveStyle.SetOverride(snapshot);
+            }
+            else
+            {
+                ActiveStyle.ClearOverride();
+                if (_styleOverrideMissingLogged != presetName)
+                {
+                    _styleOverrideMissingLogged = presetName;
+                    Plugin.LogSource?.LogWarning(
+                        $"Scope layout '{layoutKey}' references the missing style preset '{presetName}'; using the global style.");
+                }
+            }
+
+            _styleOverrideLayoutKey = layoutKey;
+            _styleOverridePresetName = presetName;
+        }
+        internal static void InvalidateStyleOverrideCache()
+        {
+            ScopeRangefinderComponent instance = _activeInstance;
+            if (instance != null)
+            {
+                instance._styleOverrideLayoutKey = null;
+                instance._styleOverridePresetName = null;
+            }
+
+            ActiveStyle.ClearOverride();
+        }
+
         private void HideOpticReadout()
         {
             _canvas.enabled = false;
@@ -214,6 +284,8 @@ namespace ScopeRangefinder
             _activeScopeCamera = null;
             _activeOpticSight = null;
             _activeWeaponAnimation = null;
+            _activeWeapon = null;
+            ActiveStyle.ClearOverride();
             _currentLayoutKey = null;
             _opticDisplayVisible = false;
             _overlayDisplayVisible = false;
@@ -229,6 +301,7 @@ namespace ScopeRangefinder
             _timeSinceLastCast = 0f;
             _lastRaycastHit = false;
             _lastMeasuredDistance = 0f;
+            RangefinderApi.LastMeasuredDistanceMeters = 0f;
         }
     }
 }

@@ -31,8 +31,11 @@ namespace ScopeRangefinder
         private float _appliedTextAberration = float.NaN;
         private float _appliedTextSpacing = float.NaN;
         private float _appliedTextGlow = float.NaN;
-        private bool _appliedZeroLine;
+        private int _appliedReadoutRows = -1;
+        private BallisticsLineMode _appliedBallisticsMode = (BallisticsLineMode)(-1);
         private bool _thicknessUnsupportedLogged;
+        private string _centeringMeasurementKey;
+        private float _centeringOffsetX;
         private bool _appliedBackgroundVisible;
         private float _appliedBackgroundWidth = float.NaN;
         private float _appliedBackgroundHeight = float.NaN;
@@ -166,12 +169,12 @@ namespace ScopeRangefinder
                 Matrix4x4.identity,
                 scopeCamera.nonJitteredProjectionMatrix);
 
-            if (Plugin.ScopeWorldBackground.Value && _reticleBackgroundRenderer != null && _reticleBackgroundMaterial != null)
+            if (ActiveStyle.BackgroundVisible && _reticleBackgroundRenderer != null && _reticleBackgroundMaterial != null)
             {
                 buffer.DrawRenderer(_reticleBackgroundRenderer, _reticleBackgroundMaterial, 0, 0);
             }
 
-            if (Plugin.ScopeTextGlow.Value > 0.001f)
+            if (ActiveStyle.TextGlow > 0.001f)
             {
                 for (int i = _reticleGlowMaterials.Length - 1; i >= 0; i--)
                 {
@@ -218,7 +221,6 @@ namespace ScopeRangefinder
             string layoutKey = ResolveScopeLayoutKey(currentOpticSight, weaponAnimation);
             _currentLayoutKey = layoutKey;
             ScopeLayoutEntry layout = GetLayoutForDisplay(layoutKey);
-            LogLayoutKeyOnce(layoutKey, currentOpticSight);
 
             float offsetX = layout.OffsetX ?? 0f;
             float offsetY = layout.OffsetY ?? 0f;
@@ -229,18 +231,19 @@ namespace ScopeRangefinder
                 || !Mathf.Approximately(offsetY, _appliedLayoutOffsetY)
                 || !Mathf.Approximately(uiScale, _appliedLayoutUiScale);
             bool cameraChanged = _configuredScopeCamera != scopeCamera;
-            bool appearanceChanged = _appliedTextColor != Plugin.ScopeWorldTextColor.Value
-                || _appliedTextOffsetY != Plugin.ScopeWorldTextOffsetY.Value
-                || _appliedTextThickness != Plugin.ScopeTextThickness.Value
-                || _appliedTextOutline != Plugin.ScopeTextOutline.Value
-                || _appliedTextAberration != Plugin.ScopeTextAberration.Value
-                || _appliedTextSpacing != Plugin.ScopeTextSpacing.Value
-                || _appliedTextGlow != Plugin.ScopeTextGlow.Value
-                || _appliedZeroLine != Plugin.ShowZeroLine.Value
-                || _appliedBackgroundVisible != Plugin.ScopeWorldBackground.Value
-                || _appliedBackgroundWidth != Plugin.ScopeWorldBackgroundWidth.Value
-                || _appliedBackgroundHeight != Plugin.ScopeWorldBackgroundHeight.Value
-                || _appliedBackgroundColor != Plugin.ScopeWorldBackgroundColor.Value;
+            bool appearanceChanged = _appliedTextColor != ActiveStyle.TextColor
+                || _appliedTextOffsetY != ActiveStyle.TextOffsetY
+                || _appliedTextThickness != ActiveStyle.TextThickness
+                || _appliedTextOutline != ActiveStyle.TextOutline
+                || _appliedTextAberration != ActiveStyle.TextAberration
+                || _appliedTextSpacing != ActiveStyle.TextSpacing
+                || _appliedTextGlow != ActiveStyle.TextGlow
+                || _appliedReadoutRows != ConfiguredReadoutRows()
+                || _appliedBallisticsMode != ActiveStyle.BallisticsLine
+                || _appliedBackgroundVisible != ActiveStyle.BackgroundVisible
+                || _appliedBackgroundWidth != ActiveStyle.BackgroundWidth
+                || _appliedBackgroundHeight != ActiveStyle.BackgroundHeight
+                || _appliedBackgroundColor != ActiveStyle.BackgroundColor;
             bool needsConfigure = !_reticleDisplayConfigured || cameraChanged || layoutChanged || appearanceChanged;
 
             if (!needsConfigure)
@@ -278,9 +281,9 @@ namespace ScopeRangefinder
             _reticleDistanceText.enableWordWrapping = false;
             _reticleDistanceText.overflowMode = TextOverflowModes.Overflow;
             _reticleDistanceText.fontSize = ReadoutTmpFontSize;
-            _reticleDistanceText.color = Plugin.ScopeWorldTextColor.Value;
+            _reticleDistanceText.color = ActiveStyle.TextColor;
             _reticleDistanceText.rectTransform.sizeDelta = new Vector2(4f, 1f);
-            _reticleDistanceText.text = Plugin.NoDistanceText.Value;
+            _reticleDistanceText.text = ActiveStyle.NoDistanceText;
 
             _reticleTextRenderer = textObject.GetComponent<MeshRenderer>();
 
@@ -314,8 +317,8 @@ namespace ScopeRangefinder
             Shader backgroundShader = Shader.Find("GUI/Text Shader") ?? Shader.Find("Unlit/Color");
             _reticleBackgroundMaterial = new Material(backgroundShader);
             ConfigureReticleDrawMaterial(_reticleBackgroundMaterial, 4999);
-            _reticleBackgroundMaterial.color = Plugin.ScopeWorldBackgroundColor.Value;
-            SetReticleBackgroundVisible(Plugin.ScopeWorldBackground.Value);
+            _reticleBackgroundMaterial.color = ActiveStyle.BackgroundColor;
+            SetReticleBackgroundVisible(ActiveStyle.BackgroundVisible);
             DisableRegularMeshRenderer(_reticleTextRenderer);
             DisableRegularMeshRenderer(_reticleBackgroundRenderer);
 
@@ -347,7 +350,7 @@ namespace ScopeRangefinder
             {
                 ApplyTextFaceColor();
                 _reticleDistanceText.fontSize = ReadoutTmpFontSize;
-                TextAlignmentOptions alignment = Plugin.ShowZeroLine.Value
+                TextAlignmentOptions alignment = ConfiguredReadoutRows() > 1
                     ? TextAlignmentOptions.Left
                     : TextAlignmentOptions.Center;
                 if (_reticleDistanceText.alignment != alignment)
@@ -357,7 +360,7 @@ namespace ScopeRangefinder
                     _distanceTextDirty = true;
                 }
 
-                float spacing = Plugin.ScopeTextSpacing.Value;
+                float spacing = ActiveStyle.TextSpacing;
                 if (!Mathf.Approximately(_reticleDistanceText.characterSpacing, spacing))
                 {
                     _reticleDistanceText.characterSpacing = spacing;
@@ -375,31 +378,34 @@ namespace ScopeRangefinder
 
             if (_reticleBackground != null)
             {
-                bool zeroLine = Plugin.ShowZeroLine.Value;
-                float width = Mathf.Max(0.05f, Plugin.ScopeWorldBackgroundWidth.Value) * (zeroLine ? 1.6f : 1f);
-                float height = Mathf.Max(0.03f, Plugin.ScopeWorldBackgroundHeight.Value) * (zeroLine ? 1.85f : 1f);
+                int rows = ConfiguredReadoutRows();
+                float width = Mathf.Max(0.05f, ActiveStyle.BackgroundWidth)
+                    * ReadoutPlateWidthFactor(rows);
+                float height = Mathf.Max(0.03f, ActiveStyle.BackgroundHeight)
+                    * ReadoutPlateHeightFactor(rows);
                 _reticleBackground.transform.localScale = new Vector3(width, height, 1f);
             }
 
             if (_reticleBackgroundMaterial != null)
             {
-                _reticleBackgroundMaterial.color = Plugin.ScopeWorldBackgroundColor.Value;
+                _reticleBackgroundMaterial.color = ActiveStyle.BackgroundColor;
             }
 
-            SetReticleBackgroundVisible(Plugin.ScopeWorldBackground.Value);
+            SetReticleBackgroundVisible(ActiveStyle.BackgroundVisible);
 
-            _appliedTextColor = Plugin.ScopeWorldTextColor.Value;
-            _appliedTextOffsetY = Plugin.ScopeWorldTextOffsetY.Value;
-            _appliedTextThickness = Plugin.ScopeTextThickness.Value;
-            _appliedTextOutline = Plugin.ScopeTextOutline.Value;
-            _appliedTextAberration = Plugin.ScopeTextAberration.Value;
-            _appliedTextSpacing = Plugin.ScopeTextSpacing.Value;
-            _appliedTextGlow = Plugin.ScopeTextGlow.Value;
-            _appliedZeroLine = Plugin.ShowZeroLine.Value;
-            _appliedBackgroundVisible = Plugin.ScopeWorldBackground.Value;
-            _appliedBackgroundWidth = Plugin.ScopeWorldBackgroundWidth.Value;
-            _appliedBackgroundHeight = Plugin.ScopeWorldBackgroundHeight.Value;
-            _appliedBackgroundColor = Plugin.ScopeWorldBackgroundColor.Value;
+            _appliedTextColor = ActiveStyle.TextColor;
+            _appliedTextOffsetY = ActiveStyle.TextOffsetY;
+            _appliedTextThickness = ActiveStyle.TextThickness;
+            _appliedTextOutline = ActiveStyle.TextOutline;
+            _appliedTextAberration = ActiveStyle.TextAberration;
+            _appliedTextSpacing = ActiveStyle.TextSpacing;
+            _appliedTextGlow = ActiveStyle.TextGlow;
+            _appliedReadoutRows = ConfiguredReadoutRows();
+            _appliedBallisticsMode = ActiveStyle.BallisticsLine;
+            _appliedBackgroundVisible = ActiveStyle.BackgroundVisible;
+            _appliedBackgroundWidth = ActiveStyle.BackgroundWidth;
+            _appliedBackgroundHeight = ActiveStyle.BackgroundHeight;
+            _appliedBackgroundColor = ActiveStyle.BackgroundColor;
         }
         private void ApplyTextThickness()
         {
@@ -410,7 +416,7 @@ namespace ScopeRangefinder
 
             if (_reticleTextMaterial.HasProperty("_FaceDilate"))
             {
-                float thickness = Plugin.ScopeTextThickness.Value;
+                float thickness = ActiveStyle.TextThickness;
                 _reticleTextMaterial.SetFloat("_FaceDilate", thickness);
                 if (!Mathf.Approximately(_appliedTextThickness, thickness) && _reticleDistanceText != null)
                 {
@@ -419,7 +425,7 @@ namespace ScopeRangefinder
                     _distanceTextDirty = true;
                 }
             }
-            else if (!_thicknessUnsupportedLogged && Mathf.Abs(Plugin.ScopeTextThickness.Value) > 0.001f)
+            else if (!_thicknessUnsupportedLogged && Mathf.Abs(ActiveStyle.TextThickness) > 0.001f)
             {
                 _thicknessUnsupportedLogged = true;
                 Plugin.LogSource?.LogInfo(
@@ -435,7 +441,7 @@ namespace ScopeRangefinder
                 return;
             }
 
-            Color textColor = Plugin.ScopeWorldTextColor.Value;
+            Color textColor = ActiveStyle.TextColor;
             if (_reticleTextMaterial.HasProperty("_FaceColor"))
             {
                 _reticleDistanceText.color = new Color(1f, 1f, 1f, textColor.a);
@@ -450,7 +456,7 @@ namespace ScopeRangefinder
         private const float AberrationMaxShift = 0.018f;
         private void ApplyTextAberration()
         {
-            float strength = Mathf.Clamp01(Plugin.ScopeTextAberration.Value);
+            float strength = Mathf.Clamp01(ActiveStyle.TextAberration);
             bool active = strength > 0.001f
                 && _reticleTextMaterial != null
                 && _reticleTextMaterial.HasProperty("_FaceDilate");
@@ -460,7 +466,7 @@ namespace ScopeRangefinder
             }
 
             GlowStyling.GetAberrationFringeColors(
-                Plugin.ScopeWorldTextColor.Value, out Color outwardColor, out Color inwardColor);
+                ActiveStyle.TextColor, out Color outwardColor, out Color inwardColor);
             for (int i = 0; i < _reticleFringeMaterials.Length; i++)
             {
                 if (_reticleFringeMaterials[i] == null)
@@ -469,7 +475,7 @@ namespace ScopeRangefinder
                 }
 
                 Material fringe = _reticleFringeMaterials[i];
-                fringe.SetFloat("_FaceDilate", Plugin.ScopeTextThickness.Value);
+                fringe.SetFloat("_FaceDilate", ActiveStyle.TextThickness);
                 fringe.SetFloat("_OutlineWidth", 0f);
                 fringe.DisableKeyword("OUTLINE_ON");
                 Color fringeColor = i == 0 ? outwardColor : inwardColor;
@@ -479,7 +485,7 @@ namespace ScopeRangefinder
         }
         private void DrawAberrationFringes(CommandBuffer buffer)
         {
-            float strength = Mathf.Clamp01(Plugin.ScopeTextAberration.Value);
+            float strength = Mathf.Clamp01(ActiveStyle.TextAberration);
             if (strength <= 0.001f || _reticleDistanceText == null)
             {
                 return;
@@ -515,7 +521,7 @@ namespace ScopeRangefinder
                 return;
             }
 
-            float width = Mathf.Clamp01(Plugin.ScopeTextOutline.Value);
+            float width = Mathf.Clamp01(ActiveStyle.TextOutline);
             _reticleTextMaterial.SetFloat("_OutlineWidth", width);
             _reticleTextMaterial.SetColor("_OutlineColor", Color.black);
             if (width > 0f)
@@ -536,7 +542,7 @@ namespace ScopeRangefinder
         }
         private void ApplyTextGlow()
         {
-            float strength = Mathf.Clamp01(Plugin.ScopeTextGlow.Value);
+            float strength = Mathf.Clamp01(ActiveStyle.TextGlow);
             bool glowActive = strength > 0.001f
                 && _reticleTextMaterial != null
                 && _reticleTextMaterial.HasProperty("_FaceDilate");
@@ -554,8 +560,8 @@ namespace ScopeRangefinder
                         _reticleGlowMaterials[i],
                         i,
                         strength,
-                        Plugin.ScopeTextThickness.Value,
-                        Plugin.ScopeWorldTextColor.Value);
+                        ActiveStyle.TextThickness,
+                        ActiveStyle.TextColor);
                 }
             }
             Material desiredSharedMaterial = glowActive
@@ -636,8 +642,8 @@ namespace ScopeRangefinder
             }
             _reticleDistanceText.SetMonospaceText(text, false);
             _reticleDistanceText.ForceMeshUpdate();
-            RecenterReadoutText();
             _lastRenderedDistanceText = text;
+            RecenterReadoutText();
             _distanceTextDirty = false;
         }
         private void RecenterReadoutText()
@@ -647,16 +653,46 @@ namespace ScopeRangefinder
                 return;
             }
 
-            float offsetX = 0f;
-            if (Plugin.ShowZeroLine.Value)
-            {
-                offsetX = -_reticleDistanceText.textBounds.center.x;
-            }
+            float offsetX = ConfiguredReadoutRows() > 1 ? GetStableCenteringOffsetX() : 0f;
 
             _reticleDistanceText.transform.localPosition = new Vector3(
                 offsetX,
-                Plugin.ScopeWorldTextOffsetY.Value * ScopeCanvasDefaultUiScale,
+                ActiveStyle.TextOffsetY * ScopeCanvasDefaultUiScale,
                 0f);
+        }
+        private float GetStableCenteringOffsetX()
+        {
+            string widestText = BuildWidestReadoutText();
+            string measurementKey = string.Concat(
+                widestText,
+                "|",
+                _reticleAppliedFont != null ? _reticleAppliedFont.GetInstanceID().ToString() : "0",
+                "|",
+                _reticleDistanceText.characterSpacing.ToString("F3"),
+                "|",
+                _reticleDistanceText.fontSize.ToString("F3"));
+            if (measurementKey == _centeringMeasurementKey)
+            {
+                return _centeringOffsetX;
+            }
+
+            string liveText = _lastRenderedDistanceText;
+            _reticleDistanceText.SetMonospaceText(widestText, false);
+            _reticleDistanceText.ForceMeshUpdate();
+            _centeringOffsetX = -_reticleDistanceText.textBounds.center.x;
+            _centeringMeasurementKey = measurementKey;
+            if (!string.IsNullOrEmpty(liveText))
+            {
+                _reticleDistanceText.SetMonospaceText(liveText, false);
+                _reticleDistanceText.ForceMeshUpdate();
+            }
+            else
+            {
+                _lastRenderedDistanceText = null;
+                _distanceTextDirty = true;
+            }
+
+            return _centeringOffsetX;
         }
 
         private void SetReticleReadoutVisible(bool visible)

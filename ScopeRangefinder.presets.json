@@ -160,21 +160,98 @@
       "OffsetX": -0.206,
       "OffsetY": -0.242,
       "Scale": 0.025
+    },
+    "6478641c19d732620e045e17": {
+      "OffsetX": -0.34,
+      "OffsetY": -0.284,
+      "Scale": 0.05
+    },
+    "5d0a3a58d7ad1a669c15ca14": {
+      "OffsetX": -0.248,
+      "OffsetY": -0.26,
+      "Scale": 0.025
+    },
+    "5dff772da3651922b360bf91": {
+      "OffsetX": -0.212,
+      "OffsetY": -0.192,
+      "Scale": 0.025
+    },
+    "5d0a3e8cd7ad1a6f6a3d35bd": {
+      "OffsetX": -0.216,
+      "OffsetY": -0.278,
+      "Scale": 0.05
+    },
+    "576fd4ec2459777f0b518431": {
+      "OffsetX": 0.0,
+      "OffsetY": -0.384,
+      "Scale": 0.025
+    },
+    "5c82342f2e221644f31c060e": {
+      "OffsetX": -0.234,
+      "OffsetY": -0.296,
+      "Scale": 0.025
+    },
+    "5c82343a2e221644f31c0611": {
+      "OffsetX": -0.216,
+      "OffsetY": -0.3,
+      "Scale": 0.04
+    },
+    "5cf638cbd7f00c06595bc936": {
+      "OffsetX": -0.308,
+      "OffsetY": 0.0,
+      "Scale": 0.0175
+    },
+    "5a7c74b3e899ef0014332c29": {
+      "OffsetX": -0.212,
+      "OffsetY": -0.31,
+      "Scale": 0.0425
+    },
+    "622b4d7df9cfc87d675d2ded": {
+      "OffsetX": 0.12,
+      "OffsetY": -0.104,
+      "Scale": 0.0
+    },
+    "622b4f54dc8dcc0ba8742f85": {
+      "OffsetX": 0.112,
+      "OffsetY": -0.122,
+      "Scale": -0.005
+    },
+    "618a75f0bd321d49084cd399": {
+      "OffsetX": -0.228,
+      "OffsetY": -0.3,
+      "Scale": 0.025
+    },
+    "5b3f7c1c5acfc40dc5296b1d": {
+      "OffsetX": -0.236,
+      "OffsetY": -0.22,
+      "Scale": 0.0225
+    },
+    "62ea7c793043d74a0306e19f": {
+      "OffsetX": -0.274,
+      "OffsetY": -0.26,
+      "Scale": 0.035
+    },
+    "62ebd290c427473eff0baafb": {
+      "OffsetX": -0.288,
+      "OffsetY": -0.232,
+      "Scale": 0.0425
     }
   },
   "Styles": {
     "LED Display Coral Red": {
+      "Readout.BallisticsHoldUnit": "Milliradians",
+      "Readout.BallisticsLine": "Hold",
       "Readout.DistanceUnit": "Meters",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "true",
-      "Readout.ShowZeroLine": "true",
+      "Readout.ShowZeroLine": "false",
       "Readout.UseDecimalFormat": "false",
       "Readout.ZeroLinePrefix": "ZRO",
       "Scope Background.ScopeWorldBackground": "false",
       "Scope Background.ScopeWorldBackgroundColor": "00000029",
       "Scope Background.ScopeWorldBackgroundHeight": "0.11",
-      "Scope Background.ScopeWorldBackgroundWidth": "0.26",
+      "Scope Background.ScopeWorldBackgroundWidth": "0.31",
       "Scope Text.CustomFontFile": "DigitTech14-Italic.otf",
       "Scope Text.ScopeFontName": "Consolas",
       "Scope Text.ScopeFontSource": "CustomFont",

@@ -3,6 +3,8 @@ using EFT;
 using EFT.Animations;
 using EFT.CameraControl;
 using EFT.InventoryLogic;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ScopeRangefinder
@@ -47,8 +49,13 @@ namespace ScopeRangefinder
             weaponAnimation = player.ProceduralWeaponAnimation;
             if (weaponAnimation == null
                 || weaponAnimation.ScopeAimTransforms.Count < 1
-                || weaponAnimation.CurrentScope == null
-                || !weaponAnimation.CurrentScope.IsOptic)
+                || weaponAnimation.CurrentScope == null)
+            {
+                return false;
+            }
+            bool sightIsOptic = weaponAnimation.CurrentScope.IsOptic;
+            bool allowNonMagnified = !sightIsOptic && IsAllowedNonMagnifiedSight(weaponAnimation);
+            if (!sightIsOptic && !allowNonMagnified)
             {
                 return false;
             }
@@ -65,20 +72,22 @@ namespace ScopeRangefinder
             {
                 return false;
             }
-
-            OpticCameraManager opticManager = cameraManager.OpticCameraManager;
-            OpticSight activeOpticSight = opticManager?.CurrentOpticSight;
-            Camera opticCamera = opticManager?.Camera;
-            if (activeOpticSight != null
-                && activeOpticSight.isActiveAndEnabled
-                && opticCamera != null
-                && opticCamera.isActiveAndEnabled)
+            if (!allowNonMagnified)
             {
-                scopeCamera = opticCamera;
-                currentOpticSight = activeOpticSight;
-                return true;
+                OpticCameraManager opticManager = cameraManager.OpticCameraManager;
+                OpticSight activeOpticSight = opticManager?.CurrentOpticSight;
+                Camera opticCamera = opticManager?.Camera;
+                if (activeOpticSight != null
+                    && activeOpticSight.isActiveAndEnabled
+                    && opticCamera != null
+                    && opticCamera.isActiveAndEnabled)
+                {
+                    scopeCamera = opticCamera;
+                    currentOpticSight = activeOpticSight;
+                    return true;
+                }
             }
-            if (Plugin.PiPDisablerLoaded)
+            if (Plugin.PiPDisablerLoaded || allowNonMagnified)
             {
                 Camera mainCamera = cameraManager.Camera;
                 if (mainCamera != null && mainCamera.gameObject.activeInHierarchy)
@@ -91,6 +100,33 @@ namespace ScopeRangefinder
             }
 
             return false;
+        }
+        private static string _nonMagnifiedSightsRaw;
+        private static HashSet<string> _nonMagnifiedSightIds;
+        private static bool IsAllowedNonMagnifiedSight(ProceduralWeaponAnimation weaponAnimation)
+        {
+            string templateId = weaponAnimation?.CurrentScope?.Mod?.Item?.StringTemplateId;
+            if (string.IsNullOrEmpty(templateId))
+            {
+                return false;
+            }
+
+            string configured = Plugin.NonMagnifiedSights?.Value ?? string.Empty;
+            if (!string.Equals(configured, _nonMagnifiedSightsRaw, StringComparison.Ordinal))
+            {
+                _nonMagnifiedSightsRaw = configured;
+                _nonMagnifiedSightIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (string entry in configured.Split(','))
+                {
+                    string trimmed = entry.Trim();
+                    if (trimmed.Length > 0)
+                    {
+                        _nonMagnifiedSightIds.Add(trimmed);
+                    }
+                }
+            }
+
+            return _nonMagnifiedSightIds.Contains(templateId);
         }
 
         private static bool IsPlayerUsable(Player player, GameWorld gameWorld)

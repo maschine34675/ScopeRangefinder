@@ -109,8 +109,7 @@ namespace ScopeRangefinder
 
             return weaponAnimation?.CurrentScope?.ScopePrefabCache?.name;
         }
-
-        private void LogLayoutKeyOnce(string layoutKey, OpticSight currentOpticSight)
+        private void LogLayoutKeyOnce(string layoutKey)
         {
             if (!Plugin.LogScopeKeys.Value || string.IsNullOrEmpty(layoutKey) || layoutKey == _lastLoggedLayoutKey)
             {
@@ -118,25 +117,66 @@ namespace ScopeRangefinder
             }
 
             _lastLoggedLayoutKey = layoutKey;
-            Plugin.LogSource?.LogInfo($"Using scope layout key '{layoutKey}'.");
+            string path = _usingMainCameraScope ? "screen overlay" : "in-scope";
+            Plugin.LogSource?.LogInfo($"Using scope layout key '{layoutKey}' ({path}).");
         }
 
         private const float MetersPerYard = 0.9144f;
+        internal static int ConfiguredReadoutRows()
+        {
+            int rows = 1;
+            if (ActiveStyle.ShowZeroLine)
+            {
+                rows++;
+            }
+
+            if (ActiveStyle.BallisticsLine != BallisticsLineMode.Off)
+            {
+                rows++;
+            }
+
+            return rows;
+        }
+        internal static float ReadoutPlateWidthFactor(int rows)
+        {
+            if (rows <= 1)
+            {
+                return 1f;
+            }
+
+            return ActiveStyle.BallisticsLine == BallisticsLineMode.Dial ? 2.6f : 1.6f;
+        }
+
+        internal static float ReadoutPlateHeightFactor(int rows)
+        {
+            return rows <= 1 ? 1f : rows == 2 ? 1.85f : 2.65f;
+        }
 
         private string BuildDistanceText()
         {
             string rangeValue = _lastRaycastHit
                 ? FormatDistanceValue(GetDisplayDistance())
-                : Plugin.NoDistanceText.Value;
+                : ActiveStyle.NoDistanceText;
 
-            if (!Plugin.ShowZeroLine.Value)
+            bool zeroLine = ActiveStyle.ShowZeroLine;
+            bool ballisticsLine = ActiveStyle.BallisticsLine != BallisticsLineMode.Off;
+            if (!zeroLine && !ballisticsLine)
             {
                 return rangeValue;
             }
 
-            return ComposeReadoutLine(Plugin.RangeLinePrefix.Value, rangeValue)
-                + "\n"
-                + ComposeReadoutLine(Plugin.ZeroLinePrefix.Value, BuildZeroValueText());
+            string text = ComposeReadoutLine(ActiveStyle.RangeLinePrefix, rangeValue);
+            if (zeroLine)
+            {
+                text += "\n" + ComposeReadoutLine(ActiveStyle.ZeroLinePrefix, BuildZeroValueText());
+            }
+
+            if (ballisticsLine)
+            {
+                text += "\n" + BuildBallisticsLineText();
+            }
+
+            return text;
         }
         private string BuildZeroValueText()
         {
@@ -161,21 +201,83 @@ namespace ScopeRangefinder
                 return FormatDistanceValue(currentSight.GetCurrentOpticCalibrationDistance());
             }
 
-            return Plugin.NoDistanceText.Value;
+            return ActiveStyle.NoDistanceText;
+        }
+        private static int ActivePrefixWidth()
+        {
+            if (ConfiguredReadoutRows() <= 1)
+            {
+                return 0;
+            }
+
+            int width = (ActiveStyle.RangeLinePrefix ?? string.Empty).Trim().Length;
+            if (ActiveStyle.ShowZeroLine)
+            {
+                width = Mathf.Max(width, (ActiveStyle.ZeroLinePrefix ?? string.Empty).Trim().Length);
+            }
+
+            switch (ActiveStyle.BallisticsLine)
+            {
+                case BallisticsLineMode.Hold:
+                    width = Mathf.Max(width, HoldLinePrefix.Length);
+                    break;
+                case BallisticsLineMode.Dial:
+                    width = Mathf.Max(width, DialLinePrefix.Length);
+                    break;
+            }
+
+            return width;
         }
 
         private static string ComposeReadoutLine(string prefix, string value)
         {
             prefix = prefix?.Trim();
-            return string.IsNullOrEmpty(prefix) ? value : prefix + " " + value;
+            int width = ActivePrefixWidth();
+            if (width <= 0)
+            {
+                return string.IsNullOrEmpty(prefix) ? value : prefix + " " + value;
+            }
+            return (prefix ?? string.Empty).PadRight(width) + " " + value;
+        }
+        internal static string BuildWidestReadoutText()
+        {
+            string widestDistance = FormatDistanceValue(8888f);
+            string noTarget = ActiveStyle.NoDistanceText ?? string.Empty;
+            if (noTarget.Length > widestDistance.Length)
+            {
+                widestDistance = noTarget;
+            }
+
+            if (ConfiguredReadoutRows() <= 1)
+            {
+                return widestDistance;
+            }
+
+            string text = ComposeReadoutLine(ActiveStyle.RangeLinePrefix, widestDistance);
+            if (ActiveStyle.ShowZeroLine)
+            {
+                text += "\n" + ComposeReadoutLine(ActiveStyle.ZeroLinePrefix, widestDistance);
+            }
+            string widestHold = FormatHoldValue(-12.3f, 1500);
+            switch (ActiveStyle.BallisticsLine)
+            {
+                case BallisticsLineMode.Hold:
+                    text += "\n" + ComposeReadoutLine(HoldLinePrefix, widestHold);
+                    break;
+                case BallisticsLineMode.Dial:
+                    text += "\n" + ComposeReadoutLine(DialLinePrefix, widestDistance) + " " + widestHold;
+                    break;
+            }
+
+            return text;
         }
 
         private static string FormatDistanceValue(float meters)
         {
             float displayDistance = ConvertToDisplayUnit(meters);
-            string suffix = Plugin.ShowUnitSuffix.Value ? GetUnitSuffix() : string.Empty;
+            string suffix = ActiveStyle.ShowUnitSuffix ? GetUnitSuffix() : string.Empty;
 
-            if (Plugin.UseDecimalFormat.Value)
+            if (ActiveStyle.UseDecimalFormat)
             {
                 return Mathf.Clamp(displayDistance, 0f, 999f).ToString("000.0") + suffix;
             }
@@ -184,12 +286,12 @@ namespace ScopeRangefinder
         }
         private static float ConvertToDisplayUnit(float meters)
         {
-            return Plugin.DistanceUnit.Value == DistanceUnit.Yards ? meters / MetersPerYard : meters;
+            return ActiveStyle.DistanceUnit == DistanceUnit.Yards ? meters / MetersPerYard : meters;
         }
 
         private static string GetUnitSuffix()
         {
-            return Plugin.DistanceUnit.Value == DistanceUnit.Yards ? "yd" : "m";
+            return ActiveStyle.DistanceUnit == DistanceUnit.Yards ? "yd" : "m";
         }
         internal static string FormatPanelDistance(int meters)
         {
@@ -198,14 +300,30 @@ namespace ScopeRangefinder
         internal static string BuildSampleDistanceText()
         {
             string rangeValue = FormatDistanceValue(123.4f);
-            if (!Plugin.ShowZeroLine.Value)
+            bool zeroLine = ActiveStyle.ShowZeroLine;
+            BallisticsLineMode ballisticsMode = ActiveStyle.BallisticsLine;
+            if (!zeroLine && ballisticsMode == BallisticsLineMode.Off)
             {
                 return rangeValue;
             }
 
-            return ComposeReadoutLine(Plugin.RangeLinePrefix.Value, rangeValue)
-                + "\n"
-                + ComposeReadoutLine(Plugin.ZeroLinePrefix.Value, FormatDistanceValue(400f));
+            string text = ComposeReadoutLine(ActiveStyle.RangeLinePrefix, rangeValue);
+            if (zeroLine)
+            {
+                text += "\n" + ComposeReadoutLine(ActiveStyle.ZeroLinePrefix, FormatDistanceValue(400f));
+            }
+
+            if (ballisticsMode == BallisticsLineMode.Dial)
+            {
+                text += "\n" + ComposeReadoutLine(DialLinePrefix, FormatDistanceValue(350f))
+                    + " " + FormatHoldValue(0.4f, 123);
+            }
+            else if (ballisticsMode == BallisticsLineMode.Hold)
+            {
+                text += "\n" + ComposeReadoutLine(HoldLinePrefix, FormatHoldValue(1.2f, 123));
+            }
+
+            return text;
         }
 
         internal void MarkDistanceTextDirty()
@@ -280,14 +398,14 @@ namespace ScopeRangefinder
                 _distanceText.font = font;
             }
 
-            Color textColor = Plugin.ScopeWorldTextColor.Value;
+            Color textColor = ActiveStyle.TextColor;
             if (_distanceText.color != textColor)
             {
                 _distanceText.color = textColor;
             }
 
-            bool zeroLine = Plugin.ShowZeroLine.Value;
-            TextAnchor alignment = zeroLine ? TextAnchor.MiddleLeft : TextAnchor.MiddleCenter;
+            int rows = ConfiguredReadoutRows();
+            TextAnchor alignment = rows > 1 ? TextAnchor.MiddleLeft : TextAnchor.MiddleCenter;
             if (_distanceText.alignment != alignment)
             {
                 _distanceText.alignment = alignment;
@@ -296,11 +414,11 @@ namespace ScopeRangefinder
             if (_panelRect != null)
             {
                 float width = OverlayBasePanelWidth
-                    * (Mathf.Max(0.05f, Plugin.ScopeWorldBackgroundWidth.Value) / 0.26f)
-                    * (zeroLine ? 1.6f : 1f);
+                    * (Mathf.Max(0.05f, ActiveStyle.BackgroundWidth) / 0.26f)
+                    * ReadoutPlateWidthFactor(rows);
                 float height = OverlayBasePanelHeight
-                    * (Mathf.Max(0.03f, Plugin.ScopeWorldBackgroundHeight.Value) / 0.11f)
-                    * (zeroLine ? 1.85f : 1f);
+                    * (Mathf.Max(0.03f, ActiveStyle.BackgroundHeight) / 0.11f)
+                    * ReadoutPlateHeightFactor(rows);
                 var panelSize = new Vector2(width, height);
                 if (_panelRect.sizeDelta != panelSize)
                 {
@@ -310,8 +428,8 @@ namespace ScopeRangefinder
 
             if (_panelImages != null)
             {
-                bool showBackground = Plugin.ScopeWorldBackground.Value;
-                Color backgroundColor = Plugin.ScopeWorldBackgroundColor.Value;
+                bool showBackground = ActiveStyle.BackgroundVisible;
+                Color backgroundColor = ActiveStyle.BackgroundColor;
                 var accentColor = new Color(
                     Mathf.Clamp01(backgroundColor.r * 2.2f),
                     Mathf.Clamp01(backgroundColor.g * 2.2f),
@@ -340,7 +458,7 @@ namespace ScopeRangefinder
 
             if (_overlayOutline != null)
             {
-                float outline = Mathf.Clamp01(Plugin.ScopeTextOutline.Value);
+                float outline = Mathf.Clamp01(ActiveStyle.TextOutline);
                 bool outlineActive = outline > 0.001f;
                 if (_overlayOutline.enabled != outlineActive)
                 {
@@ -359,7 +477,7 @@ namespace ScopeRangefinder
 
             if (_distanceTextRect != null)
             {
-                float offsetY = Plugin.ScopeWorldTextOffsetY.Value / 0.11f * OverlayBasePanelHeight;
+                float offsetY = ActiveStyle.TextOffsetY / 0.11f * OverlayBasePanelHeight;
                 var anchored = new Vector2(0f, offsetY);
                 if (_distanceTextRect.anchoredPosition != anchored)
                 {

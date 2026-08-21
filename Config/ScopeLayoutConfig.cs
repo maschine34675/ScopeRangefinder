@@ -295,6 +295,8 @@ namespace ScopeRangefinder
         public float? OffsetX { get; set; }
         public float? OffsetY { get; set; }
         public float? Scale { get; set; }
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public string StylePreset { get; set; }
 
         public static ScopeLayoutEntry Merge(ScopeLayoutEntry fallback, ScopeLayoutEntry specific)
         {
@@ -305,7 +307,8 @@ namespace ScopeRangefinder
             {
                 OffsetX = specific.OffsetX ?? fallback.OffsetX,
                 OffsetY = specific.OffsetY ?? fallback.OffsetY,
-                Scale = specific.Scale ?? fallback.Scale
+                Scale = specific.Scale ?? fallback.Scale,
+                StylePreset = specific.StylePreset ?? fallback.StylePreset
             };
         }
     }
