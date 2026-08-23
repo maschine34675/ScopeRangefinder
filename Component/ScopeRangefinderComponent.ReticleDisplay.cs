@@ -36,6 +36,7 @@ namespace ScopeRangefinder
         private bool _thicknessUnsupportedLogged;
         private string _centeringMeasurementKey;
         private float _centeringOffsetX;
+        private Vector2 _widestTextSize;
         private bool _appliedBackgroundVisible;
         private float _appliedBackgroundWidth = float.NaN;
         private float _appliedBackgroundHeight = float.NaN;
@@ -201,10 +202,122 @@ namespace ScopeRangefinder
             float offsetY = float.IsNaN(_appliedLayoutOffsetY) ? 0f : _appliedLayoutOffsetY;
             float uiScale = float.IsNaN(_appliedLayoutUiScale) ? ScopeCanvasDefaultUiScale : _appliedLayoutUiScale;
             float meshScale = ReadoutBaseScale * uiScale * zoomCompensation;
+            float shiftX = 0f;
+            float shiftY = 0f;
+            if (_appliedLayoutAnchor != ReadoutAnchor.Center)
+            {
+                Vector2 pivot = _appliedLayoutAnchor.ToPivot();
+                GetReadoutBlockEnvelope(out Vector2 blockSize, out Vector2 blockCenter);
+                shiftX = (-blockCenter.x + (0.5f - pivot.x) * blockSize.x) * meshScale;
+                shiftY = (-blockCenter.y + (0.5f - pivot.y) * blockSize.y) * meshScale;
+            }
             _reticleReadoutRoot.transform.SetPositionAndRotation(
-                new Vector3(offsetX * 2f * halfWidth, offsetY * 2f * halfHeight, -depth),
+                new Vector3(offsetX * 2f * halfWidth + shiftX, offsetY * 2f * halfHeight + shiftY, -depth),
                 Quaternion.identity);
             _reticleReadoutRoot.transform.localScale = Vector3.one * meshScale;
+        }
+        private bool TryGetAnchorSwitchOffsetDelta(
+            ReadoutAnchor from,
+            ReadoutAnchor to,
+            out Vector2 delta)
+        {
+            delta = Vector2.zero;
+            if (_usingMainCameraScope)
+            {
+                if (_panelRect == null)
+                {
+                    return false;
+                }
+
+                Vector2 pivotDelta = to.ToPivot() - from.ToPivot();
+                Vector2 size = Vector2.Scale(_panelRect.sizeDelta, (Vector2)_panelRect.localScale);
+                delta = new Vector2(pivotDelta.x * size.x / 1920f, pivotDelta.y * size.y / 1080f);
+                return true;
+            }
+
+            float uiScale = float.IsNaN(_appliedLayoutUiScale) ? ScopeCanvasDefaultUiScale : _appliedLayoutUiScale;
+            return TryGetInScopeAnchorSwitchDelta(from, to, uiScale, out delta);
+        }
+        private bool TryGetAnchorSwitchOffsetDeltaForScale(
+            ReadoutAnchor from,
+            ReadoutAnchor to,
+            float scaleAdjustment,
+            out Vector2 delta)
+        {
+            delta = Vector2.zero;
+            if (_usingMainCameraScope)
+            {
+                return false;
+            }
+
+            return TryGetInScopeAnchorSwitchDelta(from, to, ResolveLayoutUiScale(scaleAdjustment), out delta);
+        }
+
+        private bool TryGetInScopeAnchorSwitchDelta(
+            ReadoutAnchor from,
+            ReadoutAnchor to,
+            float uiScale,
+            out Vector2 delta)
+        {
+            delta = Vector2.zero;
+            Camera scopeCamera = _activeScopeCamera;
+            if (scopeCamera == null || _reticleReadoutRoot == null)
+            {
+                return false;
+            }
+            float depth = ResolveReticleReadoutDepth(scopeCamera);
+            float halfHeight = depth * Mathf.Tan(scopeCamera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float halfWidth = halfHeight * scopeCamera.aspect;
+            float meshScale = ReadoutBaseScale * uiScale * CalculateReadoutZoomCompensation(scopeCamera, depth);
+            Vector2 shiftFrom = AnchorShiftLocal(from);
+            Vector2 shiftTo = AnchorShiftLocal(to);
+            delta = new Vector2(
+                (shiftFrom.x - shiftTo.x) * meshScale / (2f * halfWidth),
+                (shiftFrom.y - shiftTo.y) * meshScale / (2f * halfHeight));
+            return true;
+        }
+        private Vector2 AnchorShiftLocal(ReadoutAnchor anchor)
+        {
+            if (anchor == ReadoutAnchor.Center)
+            {
+                return Vector2.zero;
+            }
+
+            Vector2 pivot = anchor.ToPivot();
+            GetReadoutBlockEnvelope(out Vector2 size, out Vector2 center);
+            return new Vector2(
+                -center.x + (0.5f - pivot.x) * size.x,
+                -center.y + (0.5f - pivot.y) * size.y);
+        }
+        private void GetReadoutBlockEnvelope(out Vector2 size, out Vector2 center)
+        {
+            if (ActiveStyle.BackgroundVisible && _reticleBackground != null)
+            {
+                Vector3 plate = _reticleBackground.transform.localScale;
+                size = new Vector2(plate.x, plate.y);
+                center = Vector2.zero;
+                return;
+            }
+
+            if (_reticleDistanceText != null)
+            {
+                if (ConfiguredReadoutRows() > 1)
+                {
+                    GetStableCenteringOffsetX();
+                    size = _widestTextSize;
+                }
+                else
+                {
+                    Bounds bounds = _reticleDistanceText.textBounds;
+                    size = new Vector2(bounds.size.x, bounds.size.y);
+                }
+
+                center = new Vector2(0f, ActiveStyle.TextOffsetY * ScopeCanvasDefaultUiScale);
+                return;
+            }
+
+            size = Vector2.zero;
+            center = Vector2.zero;
         }
 
         private GameObject _reticleBackground;
@@ -225,11 +338,13 @@ namespace ScopeRangefinder
             float offsetX = layout.OffsetX ?? 0f;
             float offsetY = layout.OffsetY ?? 0f;
             float uiScale = ResolveLayoutUiScale(layout.Scale ?? 0f);
+            ReadoutAnchor anchor = layout.Anchor ?? ReadoutAnchor.Center;
 
             bool layoutChanged = layoutKey != _appliedLayoutKey
                 || !Mathf.Approximately(offsetX, _appliedLayoutOffsetX)
                 || !Mathf.Approximately(offsetY, _appliedLayoutOffsetY)
-                || !Mathf.Approximately(uiScale, _appliedLayoutUiScale);
+                || !Mathf.Approximately(uiScale, _appliedLayoutUiScale)
+                || anchor != _appliedLayoutAnchor;
             bool cameraChanged = _configuredScopeCamera != scopeCamera;
             bool appearanceChanged = _appliedTextColor != ActiveStyle.TextColor
                 || _appliedTextOffsetY != ActiveStyle.TextOffsetY
@@ -261,6 +376,7 @@ namespace ScopeRangefinder
             _appliedLayoutOffsetX = offsetX;
             _appliedLayoutOffsetY = offsetY;
             _appliedLayoutUiScale = uiScale;
+            _appliedLayoutAnchor = anchor;
             _distanceTextDirty = true;
             return true;
         }
@@ -679,7 +795,9 @@ namespace ScopeRangefinder
             string liveText = _lastRenderedDistanceText;
             _reticleDistanceText.SetMonospaceText(widestText, false);
             _reticleDistanceText.ForceMeshUpdate();
-            _centeringOffsetX = -_reticleDistanceText.textBounds.center.x;
+            Bounds widestBounds = _reticleDistanceText.textBounds;
+            _centeringOffsetX = -widestBounds.center.x;
+            _widestTextSize = new Vector2(widestBounds.size.x, widestBounds.size.y);
             _centeringMeasurementKey = measurementKey;
             if (!string.IsNullOrEmpty(liveText))
             {

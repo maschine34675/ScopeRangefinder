@@ -56,7 +56,7 @@ The mod includes layout presets for vanilla scopes and an in-game editor (F8) fo
 
 4. Check `BepInEx/LogOutput.log` for:
 
-   `maschine-ScopeRangefinder v3.2.0 loaded (build ...).`
+   `maschine-ScopeRangefinder v3.3.0 loaded (build ...).`
 
 Fresh installs start with the showcase preset (`LED Display Coral Red`) applied — the defaults are its values. When updating from 2.2.0 or older, the first start saves your previous look as the style preset `My Settings (pre-2.3.0)` and applies the showcase preset once; your old look stays one click away in the editor's preset list. Updates from 2.3.x keep your look untouched.
 
@@ -95,6 +95,7 @@ One window for everything visual. The `Layout` section and per-scope preset assi
 - `OffsetX` (arrow buttons `◀`/`▶`, matching the movement on screen)
 - `OffsetY` (arrow buttons `▼`/`▲`)
 - `Scale` (`-`/`+`)
+- `Anchor`: a 3×3 grid choosing which point of the readout the offsets pin. With the default center, a readout that gains a row grows evenly up and down — parked in a corner, it walks off the edge and needs new offsets. With a corner or edge anchor (bottom-left for a bottom-left readout) the block grows away from the pinned point instead: taller upward, wider rightward, never off the edge, whatever the row count, unit, or ballistics mode. Switching the anchor keeps the readout where it is on screen; it only changes how future growth behaves.
 - `Save Scope` / `Reset Scope` right below them: these write or remove exactly this scope's entry in `ScopeRangefinder.layouts.json` — its offsets, scale, and style assignment. Global style changes save themselves, so these two buttons never concern them.
 
 Double arrows step ten times as far; values can also be typed directly.
@@ -161,6 +162,7 @@ Only these three values are used per scope:
 - `OffsetY`: vertical placement inside the scope, normalized to the scope canvas size
 - `Scale`: size adjustment inside the scope. `0` means standard size
 - `StylePreset` (optional): name of a style preset applied while aiming through this scope; omitted = global style
+- `Anchor` (optional): which point of the readout the offsets position — `Center` (default, omitted), `TopLeft`, `Top`, `TopRight`, `Left`, `Right`, `BottomLeft`, `Bottom`, `BottomRight`
 
 The included preset JSON contains vanilla scope keys with neutral default values.
 If either installed layout file has no `Version` field or an unsupported version,
@@ -221,6 +223,17 @@ Per-scope assignments (the editor's `Only this scope` mode) are applied as an ov
 
 When both RAPTAR options are enabled, the readout is shown whenever the attached RAPTAR is active. This overrides the zoom and minimum distance activation checks.
 
+### Measurement
+
+The raw ray is exact but brittle: sweeping across a target's edge, a rock rim, or a window frame makes it flip between the target and whatever lies behind it — or nothing — several times a second. Real rangefinders answer that with scan modes and a hold time, and so does this section. Everything here is off by default, so the stock behavior is unchanged until you opt in. All of it applies to the whole measurement — the readout, the ballistics line, auto zero, and the distance other mods read — so a continuous auto zero, for instance, stops snapping back on every dropout once a hold time is set.
+
+| Key | Default | Description |
+| --- | --- | --- |
+| `HoldTime` | `0` | Seconds to keep the last valid distance when the ray briefly finds no target. `0` = off; 1–2 s works well |
+| `ScanMode` | `Off` | `Near` holds the nearest, `Far` the farthest valid target seen within the scan window, so the reticle only has to brush a target instead of resting on it. Near suits targets in front of terrain or buildings, Far targets behind cover edges, grass, or glass |
+| `ScanWindow` | `0.5` | Seconds a scan reading stays the winner before a newer one can replace it |
+| `FreezeHotkey` | unbound | Holds the current distance until pressed again or the sight is lowered: a single-shot reading you can keep while shifting to the target. A frozen reading shows `°` behind the distance. It never touches the zeroing |
+
 The following three style sections are edited in the in-game editor (F8) and no longer appear in the F12 menu. Their keys stay in the `.cfg` unchanged and are listed here for hand-editing and for writing preset files.
 
 ### Readout
@@ -231,8 +244,8 @@ The following three style sections are edited in the in-game editor (F8) and no 
 | `ShowUnitSuffix` | `true` | Append the unit to the readout (`0123m` / `0135yd`). The vanilla RAPTAR shows bare digits |
 | `UseDecimalFormat` | `false` | `false` = `0123`, `true` = `045.0` |
 | `ShowZeroLine` | `true` | Second readout row showing the currently effective zero: the auto-zeroed distance, `auto` in continuous mode, or the sight's dial distance when auto zero is off. Hides the game's corner zeroing panel while visible. Disable for the plain single-line RAPTAR look |
-| `BallisticsLine` | `Off` | Third readout row with a firing solution for the loaded round at the measured distance, computed with the game's own ballistics. `Hold`: vertical hold versus the current dial zero (positive = hold above the target). `Dial`: best zeroing stop of the active sight plus the residual hold at that stop |
-| `BallisticsHoldUnit` | `Milliradians` | Unit for hold values: milliradians (no suffix, mil-turret convention), minutes of angle (`moa`), or centimeters at the measured distance (`cm`) |
+| `BallisticsLine` | `Hold` | Third readout row with a firing solution for the loaded round at the measured distance, computed with the game's own ballistics. `Hold`: vertical hold versus the current dial zero (positive = hold above the target). `Dial`: best zeroing stop of the active sight under the `DIA` prefix, shown without the unit suffix (the zeroing row above states it), plus the residual hold at that stop in compact form (e.g. `DIA 0350+1.2`) whenever it exceeds 0.15 mil — below that the stop is simply right. While auto zero drives the zero, or on a sight without usable stops, the row keeps its `DIA` prefix but shows the plain hold instead, since no stop can be recommended |
+| `BallisticsHoldUnit` | `MinutesOfAngle` | Unit for hold values: milliradians (`mil`), minutes of angle (`moa`), or centimeters at the measured distance (`cm`) |
 | `RangeLinePrefix` | `RNG` | Prefix for the measured distance row when the zeroing line is shown. Empty = none |
 | `ZeroLinePrefix` | `ZRO` | Prefix for the zeroing row. Empty = none |
 | `NoDistanceText` | `----` | Text shown when no valid target is hit |
@@ -265,7 +278,7 @@ Exact upstream versions, checksums, and matching color palettes are documented i
 | Key | Default | Description |
 | --- | --- | --- |
 | `ScopeWorldBackground` | `false` | Enables the background plate |
-| `ScopeWorldBackgroundWidth` | `0.26` | Background plate width |
+| `ScopeWorldBackgroundWidth` | `0.31` | Background plate width |
 | `ScopeWorldBackgroundHeight` | `0.11` | Background plate height. This does not change text size |
 | `ScopeWorldBackgroundColor` | black, mostly transparent | Background color and transparency |
 
@@ -280,10 +293,10 @@ Zeroes the active optic to the measured distance, to the meter, with no distance
 | `AutoZeroHotkey` | `J` | Zeroes the optic to the currently measured distance |
 | `AutoZeroTransitionTime` | `0.35` | Seconds to smoothly blend to a new zero instead of snapping. `0` = instant |
 | `ShowTrajectoryPreview` | `false` | Draw the predicted bullet trajectory up to the measured distance. A good way to learn Tushonka's ballistics: bullet drop, travel time, and real dispersion at range |
-| `AutoZeroTrajectoryNearColor` | green, nearly transparent | Trajectory color at the muzzle. Keep the alpha low so near segments do not block the view |
-| `AutoZeroTrajectoryFarColor` | amber, opaque | Trajectory color at the far end |
-| `AutoZeroImpactSpreadCircle` | `true` | Ring at the impact point showing the maximum shot dispersion (weapon accuracy, durability, ammo, buffs, overheat) |
-| `AutoZeroSpreadCircleColor` | red-orange | Color of the dispersion ring |
+| `AutoZeroTrajectoryNearColor` (advanced) | green, nearly transparent | Trajectory color at the muzzle. Keep the alpha low so near segments do not block the view |
+| `AutoZeroTrajectoryFarColor` (advanced) | amber, opaque | Trajectory color at the far end |
+| `AutoZeroImpactSpreadCircle` (advanced) | `true` | Ring at the impact point showing the maximum shot dispersion (weapon accuracy, durability, ammo, buffs, overheat) |
+| `AutoZeroSpreadCircleColor` (advanced) | red-orange | Color of the dispersion ring |
 
 Notes:
 
@@ -352,9 +365,10 @@ Semantics:
   a grenade launcher aimed through it measures like a scope. A consumer that
   needs a specific sight to work should say so in its own documentation rather
   than assume the default list is unchanged.
-- `LastMeasurementTime` only advances on a valid measurement, so it always marks
-  the last real one. How fresh a measurement has to be is up to the consumer;
-  this mod enforces no limit.
+- `LastMeasurementTime` advances on every valid measurement and also while the
+  player holds a frozen reading (see the `Measurement` section), so a frozen
+  reading counts as current rather than stale. How fresh a measurement has to
+  be is up to the consumer; this mod enforces no limit.
 - Measurements are taken while scoped at the `UpdateInterval` rate (0.1 s by
   default).
 

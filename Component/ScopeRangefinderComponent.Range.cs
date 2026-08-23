@@ -6,37 +6,164 @@ namespace ScopeRangefinder
 {
     internal partial class ScopeRangefinderComponent
     {
+        private bool _measurementFrozen;
+        private float _lastValidHitTime = float.NegativeInfinity;
+        private float _lastValidDistance;
+        private Vector3 _lastValidHitNormal = Vector3.up;
+        private float _scanExtremeDistance;
+        private Vector3 _scanExtremeNormal = Vector3.up;
+        private float _scanExtremeTime = float.NegativeInfinity;
+        private object _measurementSight;
+        private int _measurementScopeIndex = -1;
+        private bool _measurementUsedMainCamera;
+
         private void MeasureDistance(Camera scopeCamera, ProceduralWeaponAnimation weaponAnimation, Player player)
         {
+            EFT.InventoryLogic.SightComponent sight = weaponAnimation?.CurrentAimingMod;
+            int scopeIndex = sight != null ? sight.SelectedScopeIndex : -1;
+            if (!ReferenceEquals(sight, _measurementSight)
+                || scopeIndex != _measurementScopeIndex
+                || _usingMainCameraScope != _measurementUsedMainCamera)
+            {
+                ResetMeasurementRobustness();
+                _measurementSight = sight;
+                _measurementScopeIndex = scopeIndex;
+                _measurementUsedMainCamera = _usingMainCameraScope;
+            }
+
+            if (_measurementFrozen)
+            {
+                PublishMeasurementToApi();
+                return;
+            }
+
             float maxDistance = Plugin.MaxDistance.Value;
             Vector3 origin = scopeCamera.transform.position;
             Vector3 direction = scopeCamera.transform.forward;
 
+            bool rawHit;
+            float rawDistance;
+            Vector3 rawNormal;
             if (_usingMainCameraScope)
             {
-                _lastRaycastHit = TryMeasureMainCameraDistance(
+                rawHit = TryMeasureMainCameraDistance(
                     origin,
                     direction,
                     maxDistance,
                     weaponAnimation,
                     player,
-                    out _lastMeasuredDistance,
-                    out _lastHitNormal);
+                    out rawDistance,
+                    out rawNormal);
             }
             else
             {
-                _lastRaycastHit = Physics.Raycast(
+                rawHit = Physics.Raycast(
                     origin,
                     direction,
                     out RaycastHit hit,
                     maxDistance,
                     RaycastMask,
                     QueryTriggerInteraction.Ignore);
-                _lastMeasuredDistance = _lastRaycastHit ? hit.distance : 0f;
-                _lastHitNormal = _lastRaycastHit ? hit.normal : Vector3.up;
+                rawDistance = rawHit ? hit.distance : 0f;
+                rawNormal = rawHit ? hit.normal : Vector3.up;
             }
 
+            RefineMeasurement(rawHit, rawDistance, rawNormal);
             PublishMeasurementToApi();
+        }
+        private void RefineMeasurement(bool rawHit, float rawDistance, Vector3 rawNormal)
+        {
+            float now = Time.time;
+            float holdSeconds = Mathf.Max(0f, Plugin.MeasurementHoldTime.Value);
+            ScanMode scanMode = Plugin.MeasurementScanMode.Value;
+            float scanSeconds = Mathf.Max(0f, Plugin.MeasurementScanWindow.Value);
+            bool validHit = rawHit && rawDistance > 0f;
+
+            if (validHit)
+            {
+                _lastValidHitTime = now;
+                _lastValidDistance = rawDistance;
+                _lastValidHitNormal = rawNormal;
+            }
+            if (scanMode != ScanMode.Off && scanSeconds > 0f)
+            {
+                bool extremeExpired = now - _scanExtremeTime > scanSeconds;
+                if (validHit)
+                {
+                    bool replaces = extremeExpired
+                        || (scanMode == ScanMode.Near
+                            ? rawDistance < _scanExtremeDistance
+                            : rawDistance > _scanExtremeDistance);
+                    if (replaces)
+                    {
+                        _scanExtremeDistance = rawDistance;
+                        _scanExtremeNormal = rawNormal;
+                        _scanExtremeTime = now;
+                    }
+                }
+
+                if (validHit || !extremeExpired)
+                {
+                    _lastRaycastHit = true;
+                    _lastMeasuredDistance = _scanExtremeDistance;
+                    _lastHitNormal = _scanExtremeNormal;
+                    return;
+                }
+            }
+            else
+            {
+                _scanExtremeTime = float.NegativeInfinity;
+            }
+            if (rawHit)
+            {
+                _lastRaycastHit = true;
+                _lastMeasuredDistance = rawDistance;
+                _lastHitNormal = rawNormal;
+                return;
+            }
+            if (holdSeconds > 0f && now - _lastValidHitTime <= holdSeconds)
+            {
+                _lastRaycastHit = true;
+                _lastMeasuredDistance = _lastValidDistance;
+                _lastHitNormal = _lastValidHitNormal;
+                return;
+            }
+
+            _lastRaycastHit = false;
+            _lastMeasuredDistance = 0f;
+            _lastHitNormal = Vector3.up;
+        }
+        private void UpdateMeasurementFreeze()
+        {
+            if (BlocksGameKeyboardInput
+                || !HotkeyInput.IsDownIgnoringOtherKeys(Plugin.MeasurementFreezeHotkey.Value))
+            {
+                return;
+            }
+
+            if (_measurementFrozen)
+            {
+                _measurementFrozen = false;
+                _timeSinceLastCast = float.MaxValue;
+                return;
+            }
+            if (_lastRaycastHit && _lastMeasuredDistance > 0f)
+            {
+                _measurementFrozen = true;
+            }
+        }
+
+        private void ResetMeasurementRobustness()
+        {
+            _measurementSight = null;
+            _measurementScopeIndex = -1;
+            _measurementFrozen = false;
+            _lastValidHitTime = float.NegativeInfinity;
+            _lastValidDistance = 0f;
+            _lastValidHitNormal = Vector3.up;
+            _scanExtremeTime = float.NegativeInfinity;
+            _scanExtremeDistance = 0f;
+            _scanExtremeNormal = Vector3.up;
         }
         private void PublishMeasurementToApi()
         {

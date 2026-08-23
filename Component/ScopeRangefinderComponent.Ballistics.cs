@@ -12,7 +12,7 @@ namespace ScopeRangefinder
         private const float BallisticsMaxFlightTime = 13f;
         private const float MilliradiansPerMinuteOfAngle = 0.2908882f;
         internal const string HoldLinePrefix = "HLD";
-        internal const string DialLinePrefix = "DIAL";
+        internal const string DialLinePrefix = "DIA";
 
         private Weapon _activeWeapon;
 
@@ -204,19 +204,21 @@ namespace ScopeRangefinder
                     mode == BallisticsLineMode.Dial ? DialLinePrefix : HoldLinePrefix,
                     ActiveStyle.NoDistanceText);
             }
-            if (mode == BallisticsLineMode.Dial
-                && (solution.BestDialDistance < 0
-                    || (Plugin.AutoZeroEnabled.Value && IsAutoZeroEffective(_activeWeaponAnimation?.CurrentAimingMod))))
+            bool dialUnavailable = solution.BestDialDistance < 0
+                || (Plugin.AutoZeroEnabled.Value && IsAutoZeroEffective(_activeWeaponAnimation?.CurrentAimingMod));
+            if (mode == BallisticsLineMode.Dial && dialUnavailable)
             {
-                mode = BallisticsLineMode.Hold;
+                return ComposeReadoutLine(
+                    DialLinePrefix, FormatHoldValue(solution.HoldMilliradians, solution.MeasuredDistance));
             }
 
             if (mode == BallisticsLineMode.Dial)
             {
-                string text = ComposeReadoutLine(DialLinePrefix, FormatDistanceValue(solution.BestDialDistance));
-                if (Mathf.Abs(solution.BestDialResidualMilliradians) >= 0.05f)
+                string text = ComposeReadoutLine(
+                    DialLinePrefix, FormatDistanceValue(solution.BestDialDistance, withSuffix: false));
+                if (Mathf.Abs(solution.BestDialResidualMilliradians) >= DialResidualThresholdMilliradians)
                 {
-                    text += " " + FormatHoldValue(solution.BestDialResidualMilliradians, solution.MeasuredDistance);
+                    text += FormatDialResidual(solution.BestDialResidualMilliradians, solution.MeasuredDistance);
                 }
 
                 return text;
@@ -224,6 +226,20 @@ namespace ScopeRangefinder
 
             return ComposeReadoutLine(
                 HoldLinePrefix, FormatHoldValue(solution.HoldMilliradians, solution.MeasuredDistance));
+        }
+        private const float DialResidualThresholdMilliradians = 0.15f;
+        private static string FormatDialResidual(float milliradians, int distanceMeters)
+        {
+            switch (ActiveStyle.BallisticsHoldUnit)
+            {
+                case HoldUnit.MinutesOfAngle:
+                    return (milliradians / MilliradiansPerMinuteOfAngle).ToString("+0.0;-0.0");
+                case HoldUnit.Centimeters:
+                    float centimeters = Mathf.Tan(milliradians / 1000f) * distanceMeters * 100f;
+                    return Mathf.RoundToInt(centimeters).ToString("+0;-0");
+                default:
+                    return milliradians.ToString("+0.0;-0.0");
+            }
         }
 
         private static string FormatHoldValue(float milliradians, int distanceMeters)
@@ -236,7 +252,7 @@ namespace ScopeRangefinder
                     float centimeters = Mathf.Tan(milliradians / 1000f) * distanceMeters * 100f;
                     return Mathf.RoundToInt(centimeters).ToString("+0;-0") + "cm";
                 default:
-                    return milliradians.ToString("+0.0;-0.0");
+                    return milliradians.ToString("+0.0;-0.0") + "mil";
             }
         }
     }

@@ -297,6 +297,9 @@ namespace ScopeRangefinder
         public float? Scale { get; set; }
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public string StylePreset { get; set; }
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        [JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
+        public ReadoutAnchor? Anchor { get; set; }
 
         public static ScopeLayoutEntry Merge(ScopeLayoutEntry fallback, ScopeLayoutEntry specific)
         {
@@ -305,6 +308,7 @@ namespace ScopeRangefinder
 
             return new ScopeLayoutEntry
             {
+                Anchor = specific.Anchor ?? fallback.Anchor,
                 OffsetX = specific.OffsetX ?? fallback.OffsetX,
                 OffsetY = specific.OffsetY ?? fallback.OffsetY,
                 Scale = specific.Scale ?? fallback.Scale,

@@ -16,6 +16,7 @@ namespace ScopeRangefinder
         private float _editorOffsetX;
         private float _editorOffsetY;
         private float _editorScale;
+        private ReadoutAnchor _editorAnchor = ReadoutAnchor.Center;
         private string _editorStylePreset;
         private string _editorStatus = string.Empty;
         private bool _savedCursorVisible;
@@ -49,6 +50,7 @@ namespace ScopeRangefinder
                     OffsetX = _editorOffsetX,
                     OffsetY = _editorOffsetY,
                     Scale = _editorScale,
+                    Anchor = _editorAnchor,
                     StylePreset = _editorStylePreset
                 };
             }
@@ -103,6 +105,7 @@ namespace ScopeRangefinder
                 DrawFloatControl("Scale", _editorScale, LayoutEditorScaleStep),
                 LayoutEditorMinimumScaleAdjustment,
                 LayoutEditorMaximumScaleAdjustment);
+            DrawAnchorControl();
 
             GUILayout.BeginHorizontal();
             GUI.enabled = !string.IsNullOrEmpty(_currentLayoutKey);
@@ -126,6 +129,15 @@ namespace ScopeRangefinder
                 "Writes this scope only: offsets, scale, and its style assignment. "
                 + "Global style changes save themselves.",
                 WrappedLabelStyle);
+            if (Plugin.LogScopeKeys.Value)
+            {
+                if (GUILayout.Button("Dev: convert shipped presets to inferred anchors"))
+                {
+                    _editorStatus = ConvertShippedPresetsToInferredAnchors();
+                    GUIUtility.ExitGUI();
+                }
+            }
+
             EndStyleIndent();
 
             DrawStyleSection();
@@ -196,6 +208,56 @@ namespace ScopeRangefinder
             return _layoutEditorRect.Contains(mousePosition);
         }
 
+        private static readonly ReadoutAnchor[,] AnchorGrid =
+        {
+            { ReadoutAnchor.TopLeft, ReadoutAnchor.Top, ReadoutAnchor.TopRight },
+            { ReadoutAnchor.Left, ReadoutAnchor.Center, ReadoutAnchor.Right },
+            { ReadoutAnchor.BottomLeft, ReadoutAnchor.Bottom, ReadoutAnchor.BottomRight }
+        };
+        private void DrawAnchorControl()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Anchor", GUILayout.Width(58f));
+            GUILayout.BeginVertical(GUILayout.Width(3 * 26f + 4f));
+            for (int row = 0; row < 3; row++)
+            {
+                GUILayout.BeginHorizontal();
+                for (int col = 0; col < 3; col++)
+                {
+                    ReadoutAnchor cell = AnchorGrid[row, col];
+                    bool selected = cell == _editorAnchor;
+                    Color previous = GUI.color;
+                    if (selected)
+                    {
+                        GUI.color = Color.green;
+                    }
+
+                    if (GUILayout.Toggle(selected, selected ? "●" : "·", GUI.skin.button, GUILayout.Width(26f), GUILayout.Height(18f))
+                        && !selected)
+                    {
+                        if (TryGetAnchorSwitchOffsetDelta(_editorAnchor, cell, out Vector2 offsetDelta))
+                        {
+                            _editorOffsetX += offsetDelta.x;
+                            _editorOffsetY += offsetDelta.y;
+                        }
+
+                        _editorAnchor = cell;
+                    }
+
+                    GUI.color = previous;
+                }
+
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.EndVertical();
+            GUILayout.Label(
+                "Point the offsets pin. The block grows away from it, so a bottom-left "
+                + "readout gains rows upward instead of off the edge.",
+                WrappedLabelStyle);
+            GUILayout.EndHorizontal();
+        }
+
         private float DrawFloatControl(
             string label,
             float value,
@@ -263,6 +325,7 @@ namespace ScopeRangefinder
             _editorOffsetX = layout.OffsetX ?? 0f;
             _editorOffsetY = layout.OffsetY ?? 0f;
             _editorScale = layout.Scale ?? 0f;
+            _editorAnchor = layout.Anchor ?? ReadoutAnchor.Center;
             _editorStylePreset = layout.StylePreset;
         }
 
@@ -282,6 +345,7 @@ namespace ScopeRangefinder
                     OffsetX = _editorOffsetX,
                     OffsetY = _editorOffsetY,
                     Scale = _editorScale,
+                    Anchor = _editorAnchor == ReadoutAnchor.Center ? null : _editorAnchor,
                     StylePreset = string.IsNullOrEmpty(_editorStylePreset) ? null : _editorStylePreset
                 });
 

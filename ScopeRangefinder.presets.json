@@ -7,245 +7,291 @@
   },
   "Scopes": {
     "5aa66be6e5b5b0214e506e97": {
-      "OffsetX": -0.196,
-      "OffsetY": -0.254,
-      "Scale": 0.035
+      "OffsetX": -0.2961,
+      "OffsetY": -0.2913,
+      "Scale": 0.035,
+      "Anchor": "BottomLeft"
     },
     "676175789dcee773150c6925": {
-      "OffsetX": -0.21,
-      "OffsetY": -0.27,
-      "Scale": 0.05
+      "OffsetX": -0.3277,
+      "OffsetY": -0.3139,
+      "Scale": 0.05,
+      "Anchor": "BottomLeft"
     },
     "56ea70acd2720b844b8b4594": {
-      "OffsetX": -0.2,
-      "OffsetY": -0.286,
-      "Scale": 0.04
+      "OffsetX": -0.306,
+      "OffsetY": -0.3255,
+      "Scale": 0.04,
+      "Anchor": "BottomLeft"
     },
     "62850c28da09541f43158cca": {
-      "OffsetX": -0.242,
-      "OffsetY": -0.294,
-      "Scale": 0.05
+      "OffsetX": -0.3597,
+      "OffsetY": -0.3379,
+      "Scale": 0.05,
+      "Anchor": "BottomLeft"
     },
     "5b3b99475acfc432ff4dcbee": {
-      "OffsetX": -0.21,
-      "OffsetY": -0.264,
-      "Scale": 0.04
+      "OffsetX": -0.316,
+      "OffsetY": -0.3035,
+      "Scale": 0.04,
+      "Anchor": "BottomLeft"
     },
     "61714eec290d254f5e6b2ffc": {
-      "OffsetX": -0.202,
-      "OffsetY": -0.26,
-      "Scale": 0.03
+      "OffsetX": -0.2962,
+      "OffsetY": -0.2951,
+      "Scale": 0.03,
+      "Anchor": "BottomLeft"
     },
     "5a37cb10c4a282329a73b4e7": {
-      "OffsetX": -0.208,
-      "OffsetY": -0.278,
-      "Scale": 0.05
+      "OffsetX": -0.3257,
+      "OffsetY": -0.3219,
+      "Scale": 0.05,
+      "Anchor": "BottomLeft"
     },
     "5c0517910db83400232ffee5": {
-      "OffsetX": -0.21,
-      "OffsetY": -0.296,
-      "Scale": 0.045
+      "OffsetX": -0.3218,
+      "OffsetY": -0.3377,
+      "Scale": 0.045,
+      "Anchor": "BottomLeft"
     },
     "618ba27d9008e4636a67f61d": {
-      "OffsetX": -0.22,
-      "OffsetY": -0.24,
-      "Scale": 0.0325
+      "OffsetX": -0.3171,
+      "OffsetY": -0.2762,
+      "Scale": 0.0325,
+      "Anchor": "BottomLeft"
     },
     "57ac965c24597706be5f975c": {
-      "OffsetX": -0.138,
-      "OffsetY": -0.286,
-      "Scale": 0.025
+      "OffsetX": -0.2263,
+      "OffsetY": -0.3189,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "57aca93d2459771f2c7e26db": {
-      "OffsetX": -0.138,
-      "OffsetY": -0.286,
-      "Scale": 0.025
+      "OffsetX": -0.2263,
+      "OffsetY": -0.3189,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5b2388675acfc4771e1be0be": {
-      "OffsetX": -0.274,
-      "OffsetY": -0.262,
-      "Scale": 0.0425
+      "OffsetX": -0.3829,
+      "OffsetY": -0.3026,
+      "Scale": 0.0425,
+      "Anchor": "BottomLeft"
     },
     "544a3a774bdc2d3a388b4567": {
-      "OffsetX": -0.22,
-      "OffsetY": -0.32,
-      "Scale": 0.025
+      "OffsetX": -0.3083,
+      "OffsetY": -0.3529,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "57c5ac0824597754771e88a9": {
-      "OffsetX": -0.196,
-      "OffsetY": -0.314,
-      "Scale": 0.05
+      "OffsetX": -0.3137,
+      "OffsetY": -0.3579,
+      "Scale": 0.05,
+      "Anchor": "BottomLeft"
     },
     "57adff4f24597737f373b6e6": {
-      "OffsetX": -0.244,
-      "OffsetY": -0.306,
-      "Scale": 0.03
+      "OffsetX": -0.3382,
+      "OffsetY": -0.3411,
+      "Scale": 0.03,
+      "Anchor": "BottomLeft"
     },
     "6567e7681265c8a131069b0f": {
-      "OffsetX": -0.168,
-      "OffsetY": -0.246,
-      "Scale": 0.025
+      "OffsetX": -0.2563,
+      "OffsetY": -0.2789,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5dfe6104585a0c3e995c7b82": {
-      "OffsetX": -0.254,
-      "OffsetY": -0.264,
-      "Scale": 0.04
+      "OffsetX": -0.36,
+      "OffsetY": -0.3035,
+      "Scale": 0.04,
+      "Anchor": "BottomLeft"
     },
     "617151c1d92c473c770214ab": {
-      "OffsetX": -0.094,
-      "OffsetY": -0.298,
-      "Scale": 0.03
+      "OffsetX": -0.1882,
+      "OffsetY": -0.3331,
+      "Scale": 0.03,
+      "Anchor": "BottomLeft"
     },
     "5d2dc3e548f035404a1a4798": {
-      "OffsetX": -0.2,
-      "OffsetY": -0.228,
-      "Scale": 0.025
+      "OffsetX": -0.2883,
+      "OffsetY": -0.2609,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5c07dd120db834001c39092d": {
-      "OffsetX": -0.22,
-      "OffsetY": -0.26,
-      "Scale": 0.025
+      "OffsetX": -0.3083,
+      "OffsetY": -0.2929,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5c0a2cec0db834001b7ce47d": {
-      "OffsetX": -0.22,
-      "OffsetY": -0.26,
-      "Scale": 0.025
+      "OffsetX": -0.3083,
+      "OffsetY": -0.2929,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5d1b5e94d7ad1a2b865a96b0": {
-      "OffsetX": -0.33,
-      "OffsetY": -0.232,
-      "Scale": 0.075
+      "OffsetX": -0.4772,
+      "OffsetY": -0.2868,
+      "Scale": 0.075,
+      "Anchor": "BottomLeft"
     },
     "5b3b6e495acfc4330140bd88": {
-      "OffsetX": -0.22,
-      "OffsetY": -0.28,
-      "Scale": 0.03
+      "OffsetX": -0.3142,
+      "OffsetY": -0.3151,
+      "Scale": 0.03,
+      "Anchor": "BottomLeft"
     },
     "67641b461c2eb66ade05dba6": {
-      "OffsetX": -0.35,
-      "OffsetY": -0.224,
-      "Scale": 0.0625
+      "OffsetX": -0.4824,
+      "OffsetY": -0.2734,
+      "Scale": 0.0625,
+      "Anchor": "BottomLeft"
     },
     "63fc44e2429a8a166c7f61e6": {
-      "OffsetX": -0.322,
-      "OffsetY": -0.28,
-      "Scale": 0.07
+      "OffsetX": -0.4633,
+      "OffsetY": -0.3326,
+      "Scale": 0.07,
+      "Anchor": "BottomLeft"
     },
     "5c05293e0db83400232fff80": {
-      "OffsetX": -0.26,
-      "OffsetY": -0.3,
-      "Scale": 0.025
+      "OffsetX": -0.3483,
+      "OffsetY": -0.3329,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5c052a900db834001a66acbd": {
-      "OffsetX": -0.3,
-      "OffsetY": -0.26,
-      "Scale": 0.025
+      "OffsetX": -0.3883,
+      "OffsetY": -0.2929,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "59db7e1086f77448be30ddf3": {
-      "OffsetX": -0.26,
-      "OffsetY": -0.28,
-      "Scale": 0.025
+      "OffsetX": -0.3483,
+      "OffsetY": -0.3129,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5c1cdd512e22161b267d91ae": {
-      "OffsetX": -0.26,
-      "OffsetY": -0.26,
-      "Scale": 0.025
+      "OffsetX": -0.3483,
+      "OffsetY": -0.2929,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5a1eaa87fcdbcb001865f75e": {
-      "OffsetX": -0.35,
-      "OffsetY": -0.228,
-      "Scale": 0.05
+      "OffsetX": -0.4677,
+      "OffsetY": -0.2719,
+      "Scale": 0.05,
+      "Anchor": "BottomLeft"
     },
     "626bb8532c923541184624b4": {
-      "OffsetX": -0.206,
-      "OffsetY": -0.242,
-      "Scale": 0.025
+      "OffsetX": -0.2943,
+      "OffsetY": -0.2749,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "6478641c19d732620e045e17": {
-      "OffsetX": -0.34,
-      "OffsetY": -0.284,
-      "Scale": 0.05
+      "OffsetX": -0.4577,
+      "OffsetY": -0.3279,
+      "Scale": 0.05,
+      "Anchor": "BottomLeft"
     },
     "5d0a3a58d7ad1a669c15ca14": {
-      "OffsetX": -0.248,
-      "OffsetY": -0.26,
-      "Scale": 0.025
+      "OffsetX": -0.3363,
+      "OffsetY": -0.2929,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5dff772da3651922b360bf91": {
-      "OffsetX": -0.212,
-      "OffsetY": -0.192,
-      "Scale": 0.025
+      "OffsetX": -0.3003,
+      "OffsetY": -0.2249,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5d0a3e8cd7ad1a6f6a3d35bd": {
-      "OffsetX": -0.216,
-      "OffsetY": -0.278,
-      "Scale": 0.05
+      "OffsetX": -0.3337,
+      "OffsetY": -0.3219,
+      "Scale": 0.05,
+      "Anchor": "BottomLeft"
     },
     "576fd4ec2459777f0b518431": {
       "OffsetX": 0.0,
-      "OffsetY": -0.384,
-      "Scale": 0.025
+      "OffsetY": -0.4169,
+      "Scale": 0.025,
+      "Anchor": "Bottom"
     },
     "5c82342f2e221644f31c060e": {
-      "OffsetX": -0.234,
-      "OffsetY": -0.296,
-      "Scale": 0.025
+      "OffsetX": -0.3223,
+      "OffsetY": -0.3289,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5c82343a2e221644f31c0611": {
-      "OffsetX": -0.216,
-      "OffsetY": -0.3,
-      "Scale": 0.04
+      "OffsetX": -0.322,
+      "OffsetY": -0.3395,
+      "Scale": 0.04,
+      "Anchor": "BottomLeft"
     },
     "5cf638cbd7f00c06595bc936": {
-      "OffsetX": -0.308,
-      "OffsetY": 0.0,
-      "Scale": 0.0175
+      "OffsetX": -0.3875,
+      "OffsetY": 0.0008,
+      "Scale": 0.0175,
+      "Anchor": "Left"
     },
     "5a7c74b3e899ef0014332c29": {
-      "OffsetX": -0.212,
-      "OffsetY": -0.31,
-      "Scale": 0.0425
+      "OffsetX": -0.3209,
+      "OffsetY": -0.3506,
+      "Scale": 0.0425,
+      "Anchor": "BottomLeft"
     },
     "622b4d7df9cfc87d675d2ded": {
-      "OffsetX": 0.12,
-      "OffsetY": -0.104,
-      "Scale": 0.0
+      "OffsetX": 0.1789,
+      "OffsetY": -0.1259,
+      "Scale": 0.0,
+      "Anchor": "BottomRight"
     },
     "622b4f54dc8dcc0ba8742f85": {
-      "OffsetX": 0.112,
-      "OffsetY": -0.122,
-      "Scale": -0.005
+      "OffsetX": 0.165,
+      "OffsetY": -0.1417,
+      "Scale": -0.005,
+      "Anchor": "BottomRight"
     },
     "618a75f0bd321d49084cd399": {
-      "OffsetX": -0.228,
-      "OffsetY": -0.3,
-      "Scale": 0.025
+      "OffsetX": -0.3163,
+      "OffsetY": -0.3329,
+      "Scale": 0.025,
+      "Anchor": "BottomLeft"
     },
     "5b3f7c1c5acfc40dc5296b1d": {
-      "OffsetX": -0.236,
-      "OffsetY": -0.22,
-      "Scale": 0.0225
+      "OffsetX": -0.3214,
+      "OffsetY": -0.2518,
+      "Scale": 0.0225,
+      "Anchor": "BottomLeft"
     },
     "62ea7c793043d74a0306e19f": {
-      "OffsetX": -0.274,
-      "OffsetY": -0.26,
-      "Scale": 0.035
+      "OffsetX": -0.3741,
+      "OffsetY": -0.2973,
+      "Scale": 0.035,
+      "Anchor": "BottomLeft"
     },
     "62ebd290c427473eff0baafb": {
-      "OffsetX": -0.288,
-      "OffsetY": -0.232,
-      "Scale": 0.0425
+      "OffsetX": -0.3969,
+      "OffsetY": -0.2726,
+      "Scale": 0.0425,
+      "Anchor": "BottomLeft"
     }
   },
   "Styles": {
     "LED Display Coral Red": {
-      "Readout.BallisticsHoldUnit": "Milliradians",
+      "Readout.BallisticsHoldUnit": "MinutesOfAngle",
       "Readout.BallisticsLine": "Hold",
       "Readout.DistanceUnit": "Meters",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "true",
-      "Readout.ShowZeroLine": "false",
+      "Readout.ShowZeroLine": "true",
       "Readout.UseDecimalFormat": "false",
       "Readout.ZeroLinePrefix": "ZRO",
       "Scope Background.ScopeWorldBackground": "false",

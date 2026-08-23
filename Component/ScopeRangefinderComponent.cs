@@ -45,6 +45,7 @@ namespace ScopeRangefinder
         private float _appliedLayoutOffsetX = float.NaN;
         private float _appliedLayoutOffsetY = float.NaN;
         private float _appliedLayoutUiScale = float.NaN;
+        private ReadoutAnchor _appliedLayoutAnchor = ReadoutAnchor.Center;
         private Camera _configuredScopeCamera;
         private static readonly int RaycastMask =
             LayersMaskController.HighPolyWithTerrainMask
@@ -129,6 +130,7 @@ namespace ScopeRangefinder
                 _scopedElapsedTime += Time.deltaTime;
             }
 
+            UpdateMeasurementFreeze();
             _timeSinceLastCast += Time.deltaTime;
             if (_timeSinceLastCast >= Plugin.UpdateInterval.Value)
             {
@@ -265,6 +267,7 @@ namespace ScopeRangefinder
             _appliedLayoutOffsetX = float.NaN;
             _appliedLayoutOffsetY = float.NaN;
             _appliedLayoutUiScale = float.NaN;
+            _appliedLayoutAnchor = ReadoutAnchor.Center;
             _lastRenderedDistanceText = null;
             _overlayLastRenderedText = null;
             _distanceTextDirty = true;
@@ -301,6 +304,7 @@ namespace ScopeRangefinder
             _timeSinceLastCast = 0f;
             _lastRaycastHit = false;
             _lastMeasuredDistance = 0f;
+            ResetMeasurementRobustness();
             RangefinderApi.LastMeasuredDistanceMeters = 0f;
         }
     }

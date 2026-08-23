@@ -31,6 +31,11 @@ namespace ScopeRangefinder
             float layoutOffsetX = (layout.OffsetX ?? 0f) * 1920f;
             float layoutOffsetY = (layout.OffsetY ?? 0f) * 1080f;
             float scaleFactor = ResolveLayoutUiScale(layout.Scale ?? 0f) / ScopeCanvasDefaultUiScale;
+            Vector2 pivot = (layout.Anchor ?? ReadoutAnchor.Center).ToPivot();
+            if (_panelRect.pivot != pivot)
+            {
+                _panelRect.pivot = pivot;
+            }
 
             _panelRect.localScale = Vector3.one * scaleFactor;
             _panelRect.anchoredPosition = new Vector2(
@@ -137,6 +142,10 @@ namespace ScopeRangefinder
 
             return rows;
         }
+        private const float PlateTwoRowWidthFactor = 1.6f;
+        private static string _plateFactorKey;
+        private static float _plateFactorValue = PlateTwoRowWidthFactor;
+
         internal static float ReadoutPlateWidthFactor(int rows)
         {
             if (rows <= 1)
@@ -144,7 +153,34 @@ namespace ScopeRangefinder
                 return 1f;
             }
 
-            return ActiveStyle.BallisticsLine == BallisticsLineMode.Dial ? 2.6f : 1.6f;
+            string widestText = BuildWidestReadoutText();
+            if (widestText == _plateFactorKey)
+            {
+                return _plateFactorValue;
+            }
+
+            int baselineChars = 0;
+            int widestChars = 0;
+            string[] rowsOfText = widestText.Split('\n');
+            for (int i = 0; i < rowsOfText.Length; i++)
+            {
+                int length = rowsOfText[i].Length;
+                widestChars = Mathf.Max(widestChars, length);
+                if (i < 2)
+                {
+                    baselineChars = Mathf.Max(baselineChars, length);
+                }
+            }
+
+            float factor = PlateTwoRowWidthFactor;
+            if (baselineChars > 0 && widestChars > baselineChars)
+            {
+                factor *= (float)widestChars / baselineChars;
+            }
+
+            _plateFactorKey = widestText;
+            _plateFactorValue = factor;
+            return factor;
         }
 
         internal static float ReadoutPlateHeightFactor(int rows)
@@ -157,6 +193,10 @@ namespace ScopeRangefinder
             string rangeValue = _lastRaycastHit
                 ? FormatDistanceValue(GetDisplayDistance())
                 : ActiveStyle.NoDistanceText;
+            if (_measurementFrozen)
+            {
+                rangeValue += FrozenMarker;
+            }
 
             bool zeroLine = ActiveStyle.ShowZeroLine;
             bool ballisticsLine = ActiveStyle.BallisticsLine != BallisticsLineMode.Off;
@@ -239,6 +279,8 @@ namespace ScopeRangefinder
             }
             return (prefix ?? string.Empty).PadRight(width) + " " + value;
         }
+        private const string FrozenMarker = "°";
+
         internal static string BuildWidestReadoutText()
         {
             string widestDistance = FormatDistanceValue(8888f);
@@ -246,6 +288,10 @@ namespace ScopeRangefinder
             if (noTarget.Length > widestDistance.Length)
             {
                 widestDistance = noTarget;
+            }
+            if (Plugin.MeasurementFreezeHotkey.Value.MainKey != KeyCode.None)
+            {
+                widestDistance += FrozenMarker;
             }
 
             if (ConfiguredReadoutRows() <= 1)
@@ -265,17 +311,20 @@ namespace ScopeRangefinder
                     text += "\n" + ComposeReadoutLine(HoldLinePrefix, widestHold);
                     break;
                 case BallisticsLineMode.Dial:
-                    text += "\n" + ComposeReadoutLine(DialLinePrefix, widestDistance) + " " + widestHold;
+                    string dialRow = ComposeReadoutLine(DialLinePrefix, FormatDistanceValue(8888f, withSuffix: false))
+                        + FormatDialResidual(-12.3f, 1500);
+                    string dialFallbackRow = ComposeReadoutLine(DialLinePrefix, widestHold);
+                    text += "\n" + (dialFallbackRow.Length > dialRow.Length ? dialFallbackRow : dialRow);
                     break;
             }
 
             return text;
         }
 
-        private static string FormatDistanceValue(float meters)
+        private static string FormatDistanceValue(float meters, bool withSuffix = true)
         {
             float displayDistance = ConvertToDisplayUnit(meters);
-            string suffix = ActiveStyle.ShowUnitSuffix ? GetUnitSuffix() : string.Empty;
+            string suffix = withSuffix && ActiveStyle.ShowUnitSuffix ? GetUnitSuffix() : string.Empty;
 
             if (ActiveStyle.UseDecimalFormat)
             {
@@ -315,8 +364,8 @@ namespace ScopeRangefinder
 
             if (ballisticsMode == BallisticsLineMode.Dial)
             {
-                text += "\n" + ComposeReadoutLine(DialLinePrefix, FormatDistanceValue(350f))
-                    + " " + FormatHoldValue(0.4f, 123);
+                text += "\n" + ComposeReadoutLine(DialLinePrefix, FormatDistanceValue(350f, withSuffix: false))
+                    + FormatDialResidual(0.4f, 123);
             }
             else if (ballisticsMode == BallisticsLineMode.Hold)
             {

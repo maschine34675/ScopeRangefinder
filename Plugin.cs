@@ -16,7 +16,7 @@ namespace ScopeRangefinder
     {
         public const string PluginGuid = "com.maschine.ScopeRangefinder";
         public const string PluginName = "maschine-ScopeRangefinder";
-        public const string PluginVersion = "3.2.0";
+        public const string PluginVersion = "3.3.0";
         public const string PiPDisablerGuid = "com.fiodor.pipdisabler";
         private const string MilkorReflexSightTemplateId = "6284bd5f95250a29bc628a30";
 
@@ -62,6 +62,10 @@ namespace ScopeRangefinder
         public static ConfigEntry<Color> AutoZeroSpreadCircleColor;
         public static ConfigEntry<KeyboardShortcut> LayoutEditorToggle;
         public static ConfigEntry<string> NonMagnifiedSights;
+        public static ConfigEntry<float> MeasurementHoldTime;
+        public static ConfigEntry<ScanMode> MeasurementScanMode;
+        public static ConfigEntry<float> MeasurementScanWindow;
+        public static ConfigEntry<KeyboardShortcut> MeasurementFreezeHotkey;
         public static ConfigEntry<bool> RequireWilcoxRaptar;
         public static ConfigEntry<bool> RequireWilcoxRaptarActive;
         public static ConfigEntry<bool> LogLoadedFonts;
@@ -113,6 +117,44 @@ namespace ScopeRangefinder
             UpdateInterval = Config.Bind("General", "UpdateInterval", 0.1f,
                 Tagged("Distance Update Interval (s)", 0, "Seconds between distance measurements."));
 
+            MeasurementHoldTime = Config.Bind(
+                "Measurement",
+                "HoldTime",
+                0f,
+                new ConfigDescription(
+                    "Seconds to keep the last valid distance when the ray briefly finds no target - sweeping across " +
+                    "a target edge, a rock rim, or a window frame. The readout holds the number instead of flashing " +
+                    "the no-target text, and a continuous auto zero keeps its zero instead of snapping back. " +
+                    "0 = off (every dropout shows immediately). 1-2 s works well.",
+                    new AcceptableValueRange<float>(0f, 5f),
+                    new ConfigurationManagerAttributes { DispName = "Hold Last Distance (s)", Order = 30 }));
+            MeasurementScanMode = Config.Bind(
+                "Measurement",
+                "ScanMode",
+                ScanMode.Off,
+                Tagged("Scan Mode", 20,
+                    "Like the NEAR/FAR modes of real rangefinders: within the scan window, the nearest (Near) or " +
+                    "farthest (Far) valid target wins, so the reticle only has to brush a target instead of resting on it. " +
+                    "Near suits targets in front of terrain or buildings, Far targets behind cover edges, grass, or glass - " +
+                    "but a single brush across the horizon then holds that far reading for the whole window, so keep " +
+                    "the window short with Far. Off = every measurement as taken."));
+            MeasurementScanWindow = Config.Bind(
+                "Measurement",
+                "ScanWindow",
+                0.5f,
+                new ConfigDescription(
+                    "Seconds a scan reading stays the winner before a newer one can replace it. Short keeps the readout " +
+                    "responsive, long makes it stick to what it found.",
+                    new AcceptableValueRange<float>(0.1f, 3f),
+                    new ConfigurationManagerAttributes { DispName = "Scan Window (s)", Order = 10 }));
+            MeasurementFreezeHotkey = Config.Bind(
+                "Measurement",
+                "FreezeHotkey",
+                new KeyboardShortcut(KeyCode.None),
+                Tagged("Freeze Measurement Hotkey", 0,
+                    "Holds the current distance until pressed again or the sight is lowered - a single-shot reading " +
+                    "that stays put while you shift to the target, without touching the zeroing. Unbound by default."));
+
             MinZoomBlendFactor = Config.Bind("Activation", "MinZoomBlendFactor", 0f,
                 Tagged("Minimum Zoom To Activate", 30,
                     "Minimum scope zoom (0-1) before the readout appears. 0 = show as soon as the optic view is active."));
@@ -152,15 +194,15 @@ namespace ScopeRangefinder
                     "Second readout line showing the currently effective zero: the auto-zeroed distance, " +
                     "'auto' in continuous mode, or the sight's dial distance when auto zero is off. " +
                     "The background plate grows automatically."));
-            BallisticsLine = Config.Bind("Readout", "BallisticsLine", BallisticsLineMode.Off,
+            BallisticsLine = Config.Bind("Readout", "BallisticsLine", BallisticsLineMode.Hold,
                 HiddenStyleEntry(
                     "Third readout row with a firing solution for the loaded round at the measured distance. " +
                     "Hold shows the vertical hold versus the current dial zero (positive = hold above the target, like mil turrets); " +
                     "Dial recommends the best zeroing stop of the active sight plus the residual hold at that stop. " +
                     "Computed with the game's own ballistics, so ammo, weapon mods, and drag are all accounted for."));
-            BallisticsHoldUnit = Config.Bind("Readout", "BallisticsHoldUnit", HoldUnit.Milliradians,
+            BallisticsHoldUnit = Config.Bind("Readout", "BallisticsHoldUnit", HoldUnit.MinutesOfAngle,
                 HiddenStyleEntry(
-                    "Unit for hold values on the ballistics line: milliradians (no suffix, mil-turret convention), " +
+                    "Unit for hold values on the ballistics line: milliradians (mil), " +
                     "minutes of angle, or centimeters at the measured distance."));
             RangeLinePrefix = Config.Bind("Readout", "RangeLinePrefix", "RNG",
                 HiddenStyleEntry(
@@ -236,7 +278,7 @@ namespace ScopeRangefinder
 
             ScopeWorldBackground = Config.Bind("Scope Background", "ScopeWorldBackground", false,
                 HiddenStyleEntry("Draw a small dark background plate behind the scope-bound readout."));
-            ScopeWorldBackgroundWidth = Config.Bind("Scope Background", "ScopeWorldBackgroundWidth", 0.26f,
+            ScopeWorldBackgroundWidth = Config.Bind("Scope Background", "ScopeWorldBackgroundWidth", 0.31f,
                 HiddenStyleEntry("Width of the optional scope-bound background plate."));
             ScopeWorldBackgroundHeight = Config.Bind("Scope Background", "ScopeWorldBackgroundHeight", 0.11f,
                 HiddenStyleEntry("Height of the optional scope-bound background plate."));
@@ -273,17 +315,17 @@ namespace ScopeRangefinder
                     "Draw the predicted bullet trajectory up to the measured distance, a great way to build an intuitive feel for " +
                     "Tushonka's ballistics: bullet drop, travel time, and the real dispersion at range."));
             AutoZeroTrajectoryNearColor = Config.Bind("Auto Zero", "AutoZeroTrajectoryNearColor", new Color(0f, 1f, 0.25f, 0.02f),
-                Tagged("Trajectory Color (Near)", 30,
+                TaggedAdvanced("Trajectory Color (Near)", 30,
                     "Trajectory color at the muzzle. Keep the alpha low so the near segments do not block the view downrange."));
             AutoZeroTrajectoryFarColor = Config.Bind("Auto Zero", "AutoZeroTrajectoryFarColor", new Color(1f, 0.60f, 0f, 0.9f),
-                Tagged("Trajectory Color (Far / Impact)", 20,
+                TaggedAdvanced("Trajectory Color (Far / Impact)", 20,
                     "Trajectory color at the far end. The line blends from the near color to this color with increasing distance."));
             AutoZeroImpactSpreadCircle = Config.Bind("Auto Zero", "AutoZeroImpactSpreadCircle", true,
-                Tagged("Show Dispersion Ring", 10,
+                TaggedAdvanced("Show Dispersion Ring", 10,
                     "Ring at the impact point showing the maximum shot dispersion at that distance. " +
                     "Uses the game's own formula: weapon accuracy, barrel durability, ammo factor, buffs, and overheat."));
             AutoZeroSpreadCircleColor = Config.Bind("Auto Zero", "AutoZeroSpreadCircleColor", new Color(1f, 0.25f, 0.1f, 0.85f),
-                Tagged("Dispersion Ring Color", 0, "Color of the impact dispersion ring."));
+                TaggedAdvanced("Dispersion Ring Color", 0, "Color of the impact dispersion ring."));
 
             LayoutEditorToggle = Config.Bind(
                 "General",
@@ -388,6 +430,13 @@ namespace ScopeRangefinder
                 description,
                 null,
                 new ConfigurationManagerAttributes { DispName = displayName, Order = order });
+        }
+        private static ConfigDescription TaggedAdvanced(string displayName, int order, string description)
+        {
+            return new ConfigDescription(
+                description,
+                null,
+                new ConfigurationManagerAttributes { DispName = displayName, Order = order, IsAdvanced = true });
         }
         private static ConfigDescription HiddenStyleEntry(
             string description,
