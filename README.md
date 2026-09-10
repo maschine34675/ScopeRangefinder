@@ -32,6 +32,7 @@ The mod includes layout presets for vanilla scopes and an in-game editor (F8) fo
 - Optional predicted bullet trajectory and impact dispersion ring, a great way to build a feel for Tushonka's ballistics
 - Makes BetterZeroing, ExtendedZeroRanges, and AutoRanging unnecessary; compatible with all three if installed anyway (see Notes)
 - Fallback screen overlay mode for PiP-Disabler compatibility
+- Optional Web Style Studio: a browser-based view of the style editor with a thumbnail preset gallery, real color picker, and font gallery, when Anvil-WebOverlay is installed
 
 ## Requirements
 
@@ -49,6 +50,7 @@ The mod includes layout presets for vanilla scopes and an in-game editor (F8) fo
    - `maschine-ScopeRangefinder.dll`
    - `ScopeRangefinder.presets.json`
    - `fonts/` (bundled display fonts and their licenses)
+   - `web/` (the optional Web Style Studio page; used only when Anvil-WebOverlay is installed)
 
    `ScopeRangefinder.layouts.json` (scope layout overrides) and `ScopeRangefinder.styles.json` (own style presets) are created at runtime and survive updates.
 
@@ -56,7 +58,7 @@ The mod includes layout presets for vanilla scopes and an in-game editor (F8) fo
 
 4. Check `BepInEx/LogOutput.log` for:
 
-   `maschine-ScopeRangefinder v3.3.0 loaded (build ...).`
+   `maschine-ScopeRangefinder v3.4.0 loaded (build ...).`
 
 Fresh installs start with the showcase preset (`LED Display Coral Red`) applied — the defaults are its values. When updating from 2.2.0 or older, the first start saves your previous look as the style preset `My Settings (pre-2.3.0)` and applies the showcase preset once; your old look stays one click away in the editor's preset list. Updates from 2.3.x keep your look untouched.
 
@@ -92,13 +94,14 @@ One window for everything visual. The `Layout` section and per-scope preset assi
 
 `Layout (this scope)` section (the window header shows the scope key, `Copy` copies it):
 
+- **Drag'n'drop**: while aiming, simply grab the readout with the mouse and drop it where it should sit — a faint frame around it shows the grab area, turning green while dragging. Dragging never pulls the trigger.
 - `OffsetX` (arrow buttons `◀`/`▶`, matching the movement on screen)
 - `OffsetY` (arrow buttons `▼`/`▲`)
 - `Scale` (`-`/`+`)
 - `Anchor`: a 3×3 grid choosing which point of the readout the offsets pin. With the default center, a readout that gains a row grows evenly up and down — parked in a corner, it walks off the edge and needs new offsets. With a corner or edge anchor (bottom-left for a bottom-left readout) the block grows away from the pinned point instead: taller upward, wider rightward, never off the edge, whatever the row count, unit, or ballistics mode. Switching the anchor keeps the readout where it is on screen; it only changes how future growth behaves.
 - `Save Scope` / `Reset Scope` right below them: these write or remove exactly this scope's entry in `ScopeRangefinder.layouts.json` — its offsets, scale, and style assignment. Global style changes save themselves, so these two buttons never concern them.
 
-Double arrows step ten times as far; values can also be typed directly.
+Double arrows step ten times as far; values can also be typed directly. Dragging updates the same offsets, so drag roughly, then fine-tune with the arrows if needed — `Save Scope` stores the result either way.
 
 `Style` section:
 
@@ -108,6 +111,18 @@ Double arrows step ten times as far; values can also be typed directly.
 - `Readout options`, `Text options`, `Background options`: every style setting as direct controls (sliders, toggles, color channels, the font picker). These always edit the global style; while the current scope shows an assigned preset, a hint in the window says so — clear the assignment to tune what you see.
 
 `Close` at the bottom hides the editor. Global style changes (options, applied presets) save to the config on their own.
+
+## Web Style Studio (optional)
+
+If the [Anvil-WebOverlay](https://github.com/maschine34675/WebOverlay) mod (1.11.0 or newer) is installed, the F8 editor's `Style` section gains an `Open Style Studio` button. It opens a real browser window that does the same things the F8 editor does, comfortably:
+
+- a **preset gallery** with every shipped and saved preset rendered as a thumbnail of the actual readout — you see a look before you apply it; one click applies it to all scopes, or, with `only this scope` switched on while aiming, to just that scope
+- a **live preview**, the options of the Readout, Text, and Background sections as proper controls (a real color picker with hex field, sliders, dropdowns), and a **font gallery** rendered in the actual font files from `fonts/`
+- **sharing**: `Copy` on the global style or on any saved preset, and `Paste`, which validates and previews a shared style before importing it
+
+The studio and the F8 editor are two views of the same settings — both can be open at once, and a change in one shows up in the other. Nothing depends on the library: without it the button simply is not shown. The studio cannot open in exclusive fullscreen (use borderless or windowed; the button says so). Thumbnails are rendered while you are not aiming, so they fill in between raids or with the weapon lowered.
+
+Anvil-WebOverlay is **not** bundled with this mod; install it from its own page. It needs the Microsoft WebView2 runtime, which current Windows 10/11 installations already have.
 
 ## Sharing Styles
 
@@ -248,6 +263,8 @@ The following three style sections are edited in the in-game editor (F8) and no 
 | `BallisticsHoldUnit` | `MinutesOfAngle` | Unit for hold values: milliradians (`mil`), minutes of angle (`moa`), or centimeters at the measured distance (`cm`) |
 | `RangeLinePrefix` | `RNG` | Prefix for the measured distance row when the zeroing line is shown. Empty = none |
 | `ZeroLinePrefix` | `ZRO` | Prefix for the zeroing row. Empty = none |
+| `HoldLinePrefix` | `HLD` | Prefix for the ballistics row in Hold mode. Empty = none |
+| `DialLinePrefix` | `DIA` | Prefix for the ballistics row in Dial mode (also while it falls back to the hold readout). Empty = none |
 | `NoDistanceText` | `----` | Text shown when no valid target is hit |
 
 ### Scope Text
@@ -289,7 +306,7 @@ Zeroes the active optic to the measured distance, to the meter, with no distance
 | Key | Default | Description |
 | --- | --- | --- |
 | `AutoZeroEnabled` | `false` | Master switch for auto zero |
-| `AutoZeroMode` | `Hotkey` | `Hotkey` zeroes once per key press and keeps that zero until re-pressed, the dial is used manually, or the sight changes. `Continuous` follows the measured distance while aiming |
+| `AutoZeroMode` | `Hotkey` | `Hotkey` zeroes once per key press and keeps that zero until re-pressed on the same sight, the dial is used manually, or auto zero is switched off. Aiming through another sight leaves it in place; pressing the hotkey there moves it to that sight. `Continuous` follows the measured distance while aiming |
 | `AutoZeroHotkey` | `J` | Zeroes the optic to the currently measured distance |
 | `AutoZeroTransitionTime` | `0.35` | Seconds to smoothly blend to a new zero instead of snapping. `0` = instant |
 | `ShowTrajectoryPreview` | `false` | Draw the predicted bullet trajectory up to the measured distance. A good way to learn Tushonka's ballistics: bullet drop, travel time, and real dispersion at range |

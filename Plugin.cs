@@ -12,11 +12,12 @@ namespace ScopeRangefinder
     [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
     [BepInDependency(PiPDisablerGuid, BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency(AutoRangingCompat.AutoRangingGuid, BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(StyleStudioGate.LibraryGuid, BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
         public const string PluginGuid = "com.maschine.ScopeRangefinder";
         public const string PluginName = "maschine-ScopeRangefinder";
-        public const string PluginVersion = "3.3.0";
+        public const string PluginVersion = "3.4.0";
         public const string PiPDisablerGuid = "com.fiodor.pipdisabler";
         private const string MilkorReflexSightTemplateId = "6284bd5f95250a29bc628a30";
 
@@ -34,6 +35,8 @@ namespace ScopeRangefinder
         public static ConfigEntry<HoldUnit> BallisticsHoldUnit;
         public static ConfigEntry<string> RangeLinePrefix;
         public static ConfigEntry<string> ZeroLinePrefix;
+        public static ConfigEntry<string> HoldLinePrefix;
+        public static ConfigEntry<string> DialLinePrefix;
         public static ConfigEntry<float> MinZoomBlendFactor;
         public static ConfigEntry<float> MinDisplayDistance;
         public static ConfigEntry<float> DisplayShowDelay;
@@ -209,6 +212,11 @@ namespace ScopeRangefinder
                     "Prefix for the measured distance line when the zeroing line is shown. Empty = no prefix."));
             ZeroLinePrefix = Config.Bind("Readout", "ZeroLinePrefix", "ZRO",
                 HiddenStyleEntry("Prefix for the zeroing line. Empty = no prefix."));
+            HoldLinePrefix = Config.Bind("Readout", "HoldLinePrefix", "HLD",
+                HiddenStyleEntry("Prefix for the ballistics line in Hold mode. Empty = no prefix."));
+            DialLinePrefix = Config.Bind("Readout", "DialLinePrefix", "DIA",
+                HiddenStyleEntry("Prefix for the ballistics line in Dial mode (also while it falls back to the " +
+                    "hold readout). Empty = no prefix."));
             NoDistanceText = Config.Bind("Readout", "NoDistanceText", "----",
                 HiddenStyleEntry("Text shown when no valid target is hit."));
             ScopeWorldTextColor = Config.Bind("Scope Text", "ScopeWorldTextColor",
@@ -295,7 +303,7 @@ namespace ScopeRangefinder
                 "AutoZeroMode",
                 ScopeRangefinder.AutoZeroMode.Hotkey,
                 Tagged("Zeroing Mode", 70,
-                    "Hotkey zeroes once per key press and keeps that zero until re-pressed, the zeroing dial is used manually, or the sight changes. " +
+                    "Hotkey zeroes once per key press and keeps that zero until re-pressed on the same sight, the zeroing dial is used manually, or auto zero is switched off. " +
                     "Continuous follows the measured distance while aiming."));
             AutoZeroHotkey = Config.Bind(
                 "Auto Zero",

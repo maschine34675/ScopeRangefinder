@@ -67,6 +67,7 @@ namespace ScopeRangefinder
         private void OnDestroy()
         {
             FlushStyleEditsNow();
+            DestroyStyleStudio();
             RestoreAutoZero(_activeWeaponAnimation);
             ActiveStyle.ClearOverride();
             RangefinderApi.LastMeasuredDistanceMeters = 0f;
@@ -86,6 +87,7 @@ namespace ScopeRangefinder
         {
             HandleLayoutEditorHotkey();
             UpdateFontPreview();
+            UpdateStyleStudio();
 
             if (!Plugin.Enabled.Value)
             {

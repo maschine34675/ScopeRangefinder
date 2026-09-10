@@ -19,9 +19,7 @@ namespace ScopeRangefinder
         private ReadoutAnchor _editorAnchor = ReadoutAnchor.Center;
         private string _editorStylePreset;
         private string _editorStatus = string.Empty;
-        private bool _savedCursorVisible;
-        private CursorLockMode _savedCursorLockState;
-        private bool _hasSavedCursorState;
+        private bool _cursorRequested;
         internal static bool BlocksGameMouseInput { get; private set; }
         internal static bool BlocksGameKeyboardInput { get; private set; }
 
@@ -37,6 +35,7 @@ namespace ScopeRangefinder
                 ShowLayoutEditorCursor();
             }
 
+            HandleReadoutDrag();
             FlushStyleConfigSave();
         }
 
@@ -66,7 +65,11 @@ namespace ScopeRangefinder
                 BlocksGameKeyboardInput = false;
                 return;
             }
-            BlocksGameMouseInput = _layoutEditorRect.height <= 0f || IsMouseOverEditorWindow();
+            BlocksGameMouseInput = _layoutEditorRect.height <= 0f
+                || IsMouseOverEditorWindow()
+                || _readoutDragActive
+                || _readoutMouseOver;
+            DrawReadoutDragHighlight();
             BlocksGameKeyboardInput = GUIUtility.keyboardControl != 0;
             _layoutEditorRect = GUILayout.Window(
                 34675,
@@ -127,7 +130,8 @@ namespace ScopeRangefinder
             GUILayout.EndHorizontal();
             GUILayout.Label(
                 "Writes this scope only: offsets, scale, and its style assignment. "
-                + "Global style changes save themselves.",
+                + "Global style changes save themselves. "
+                + "Tip: while aiming, drag the readout with the mouse to place it.",
                 WrappedLabelStyle);
             if (Plugin.LogScopeKeys.Value)
             {
@@ -172,35 +176,34 @@ namespace ScopeRangefinder
                 return;
             }
             FlushStyleEditsNow();
+            CancelReadoutDrag();
             BlocksGameMouseInput = false;
             BlocksGameKeyboardInput = false;
             RestoreLayoutEditorCursor();
         }
-
         private void ShowLayoutEditorCursor()
         {
-            if (!_hasSavedCursorState)
-            {
-                _savedCursorVisible = Cursor.visible;
-                _savedCursorLockState = Cursor.lockState;
-                _hasSavedCursorState = true;
-            }
-
-            Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None;
-        }
-
-        private void RestoreLayoutEditorCursor()
-        {
-            if (!_hasSavedCursorState)
+            if (_cursorRequested)
             {
                 return;
             }
 
-            Cursor.visible = _savedCursorVisible;
-            Cursor.lockState = _savedCursorLockState;
-            _hasSavedCursorState = false;
+            SetGameCursor(true);
+            _cursorRequested = true;
         }
+
+        private void RestoreLayoutEditorCursor()
+        {
+            if (!_cursorRequested)
+            {
+                return;
+            }
+
+            SetGameCursor(false);
+            _cursorRequested = false;
+        }
+
+        private static void SetGameCursor(bool show) => CursorRequestNode.Want(show);
 
         private bool IsMouseOverEditorWindow()
         {

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 
 namespace ScopeRangefinder
@@ -24,7 +25,7 @@ namespace ScopeRangefinder
             {
                 if (File.Exists(path))
                 {
-                    string backupPath = path + ".broken.json";
+                    string backupPath = path + "." + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".broken.json";
                     if (File.Exists(backupPath))
                     {
                         File.SetAttributes(backupPath, FileAttributes.Normal);

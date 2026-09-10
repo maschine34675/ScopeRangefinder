@@ -259,10 +259,10 @@ namespace ScopeRangefinder
             switch (ActiveStyle.BallisticsLine)
             {
                 case BallisticsLineMode.Hold:
-                    width = Mathf.Max(width, HoldLinePrefix.Length);
+                    width = Mathf.Max(width, (ActiveStyle.HoldLinePrefix ?? string.Empty).Trim().Length);
                     break;
                 case BallisticsLineMode.Dial:
-                    width = Mathf.Max(width, DialLinePrefix.Length);
+                    width = Mathf.Max(width, (ActiveStyle.DialLinePrefix ?? string.Empty).Trim().Length);
                     break;
             }
 
@@ -308,12 +308,12 @@ namespace ScopeRangefinder
             switch (ActiveStyle.BallisticsLine)
             {
                 case BallisticsLineMode.Hold:
-                    text += "\n" + ComposeReadoutLine(HoldLinePrefix, widestHold);
+                    text += "\n" + ComposeReadoutLine(ActiveStyle.HoldLinePrefix, widestHold);
                     break;
                 case BallisticsLineMode.Dial:
-                    string dialRow = ComposeReadoutLine(DialLinePrefix, FormatDistanceValue(8888f, withSuffix: false))
+                    string dialRow = ComposeReadoutLine(ActiveStyle.DialLinePrefix, FormatDistanceValue(8888f, withSuffix: false))
                         + FormatDialResidual(-12.3f, 1500);
-                    string dialFallbackRow = ComposeReadoutLine(DialLinePrefix, widestHold);
+                    string dialFallbackRow = ComposeReadoutLine(ActiveStyle.DialLinePrefix, widestHold);
                     text += "\n" + (dialFallbackRow.Length > dialRow.Length ? dialFallbackRow : dialRow);
                     break;
             }
@@ -364,12 +364,12 @@ namespace ScopeRangefinder
 
             if (ballisticsMode == BallisticsLineMode.Dial)
             {
-                text += "\n" + ComposeReadoutLine(DialLinePrefix, FormatDistanceValue(350f, withSuffix: false))
+                text += "\n" + ComposeReadoutLine(ActiveStyle.DialLinePrefix, FormatDistanceValue(350f, withSuffix: false))
                     + FormatDialResidual(0.4f, 123);
             }
             else if (ballisticsMode == BallisticsLineMode.Hold)
             {
-                text += "\n" + ComposeReadoutLine(HoldLinePrefix, FormatHoldValue(1.2f, 123));
+                text += "\n" + ComposeReadoutLine(ActiveStyle.HoldLinePrefix, FormatHoldValue(1.2f, 123));
             }
 
             return text;

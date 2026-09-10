@@ -346,7 +346,8 @@ namespace ScopeRangefinder
             if (instance == null
                 || !Plugin.AutoZeroEnabled.Value
                 || instance._autoZeroSight == null
-                || instance._activeWeaponAnimation?.CurrentAimingMod != instance._autoZeroSight)
+                || instance._activeWeaponAnimation?.CurrentAimingMod != instance._autoZeroSight
+                || !instance.IsAutoZeroEffective(instance._autoZeroSight))
             {
                 return false;
             }

@@ -26,6 +26,7 @@ namespace ScopeRangefinder
         public static void InvalidateShippedCache()
         {
             _cachedShippedPresets = null;
+            _cachedUserStyles = null;
             ScopeRangefinderComponent.InvalidateStyleOverrideCache();
         }
 
@@ -459,9 +460,15 @@ namespace ScopeRangefinder
                 return _cachedShippedPresets = EmptyStyles();
             }
         }
+        private static UserStylesFile _cachedUserStyles;
 
         private static UserStylesFile LoadUserStyles()
         {
+            if (_cachedUserStyles != null)
+            {
+                return _cachedUserStyles;
+            }
+
             try
             {
                 if (File.Exists(UserStylesPath))
@@ -473,7 +480,7 @@ namespace ScopeRangefinder
                         parsed.Styles = parsed.Styles == null
                             ? EmptyStyles()
                             : new Dictionary<string, Dictionary<string, string>>(parsed.Styles, StringComparer.OrdinalIgnoreCase);
-                        return parsed;
+                        return _cachedUserStyles = parsed;
                     }
                 }
             }
@@ -483,7 +490,7 @@ namespace ScopeRangefinder
                 Plugin.LogSource?.LogWarning($"Could not load user style presets: {exception.Message}");
             }
 
-            return new UserStylesFile { Version = 1, Styles = EmptyStyles() };
+            return _cachedUserStyles = new UserStylesFile { Version = 1, Styles = EmptyStyles() };
         }
 
         private static bool WriteUserStyles(UserStylesFile file)
@@ -493,10 +500,12 @@ namespace ScopeRangefinder
                 file.Version = 1;
                 Directory.CreateDirectory(Path.GetDirectoryName(UserStylesPath));
                 JsonFileSafety.WriteAtomic(UserStylesPath, JsonConvert.SerializeObject(file, Formatting.Indented));
+                _cachedUserStyles = file;
                 return true;
             }
             catch (Exception exception)
             {
+                _cachedUserStyles = null;
                 Plugin.LogSource?.LogWarning($"Could not save user style presets: {exception.Message}");
                 return false;
             }
@@ -505,6 +514,10 @@ namespace ScopeRangefinder
         private static Dictionary<string, Dictionary<string, string>> EmptyStyles()
         {
             return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);
+        }
+        internal static bool IsCoveredDefinition(ConfigDefinition definition)
+        {
+            return IsCovered(definition);
         }
 
         private static bool IsCovered(ConfigDefinition definition)

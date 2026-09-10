@@ -8,7 +8,7 @@
     <Company>https://github.com/maschine34675/ScopeRangefinder</Company>
     <AssemblyName>maschine-ScopeRangefinder</AssemblyName>
     <Copyright></Copyright>
-    <AssemblyVersion>3.3.0</AssemblyVersion>
+    <AssemblyVersion>3.4.0</AssemblyVersion>
     <FileVersion>$(AssemblyVersion)</FileVersion>
     <Configurations>Debug;Release;Package</Configurations>
     <Version>$(AssemblyVersion)</Version>
@@ -48,6 +48,13 @@
     <Reference Include="spt-reflection">
       <HintPath>..\..\BepInEx\plugins\spt\spt-reflection.dll</HintPath>
     </Reference>
+    <!-- Optional: the Web Style Studio opens through Anvil-WebOverlay when it is
+         installed. Compile-time reference only (Private=false) - the DLL is
+         never shipped with this mod; see docs/SOFT-DEPENDENCY.md of that repo. -->
+    <Reference Include="Anvil-WebOverlay">
+      <HintPath>..\..\BepInEx\plugins\Anvil-WebOverlay\Anvil-WebOverlay.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
@@ -83,6 +90,9 @@
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
       <HintPath>..\..\EscapeFromTarkov_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>..\..\EscapeFromTarkov_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -122,9 +132,19 @@
     </ItemGroup>
   </Target>
 
+  <!-- Soft-dependency contract for Anvil-WebOverlay (see tools/Audit-SoftDependency.ps1):
+       fails the build on any type-level reference to the library outside gate
+       method bodies. Mono.Cecil comes from BepInEx/core. -->
+  <Target Name="AuditSoftDependency" AfterTargets="Build">
+    <Exec
+      Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)tools\Audit-SoftDependency.ps1&quot; -AssemblyPath &quot;$(TargetPath)&quot; -GateType ScopeRangefinder.StyleStudioGate -CecilPath &quot;$(ProjectDir)..\..\BepInEx\core\Mono.Cecil.dll&quot;"
+      Condition="Exists('$(ProjectDir)..\..\BepInEx\core\Mono.Cecil.dll')" />
+  </Target>
+
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
     <ItemGroup>
       <BundledFontFiles Include="$(ProjectDir)fonts\**\*" />
+      <StudioWebFiles Include="$(ProjectDir)web\**\*" />
     </ItemGroup>
     <MakeDir Directories="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder" />
@@ -141,6 +161,9 @@
     <Copy
       SourceFiles="@(BundledFontFiles)"
       DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder\fonts" />
+    <Copy
+      SourceFiles="@(StudioWebFiles)"
+      DestinationFolder="$(ProjectDir)..\..\BepInEx\plugins\maschine-ScopeRangefinder\web" />
     <Delete Files="$(ProjectDir)..\..\BepInEx\plugins\$(TargetFileName)" />
   </Target>
 
@@ -161,12 +184,14 @@
       Text="ScopeRangefinder.presets.json is missing; refusing to package an incomplete release." />
     <ItemGroup>
       <ReleaseFontFiles Include="$(ProjectDir)fonts\**\*" />
+      <ReleaseWebFiles Include="$(ProjectDir)web\**\*" />
     </ItemGroup>
     <RemoveDir Directories="$(PackageRoot)" />
     <MakeDir Directories="$(PackagePluginDir)" />
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(PackagePluginDir)" />
     <Copy SourceFiles="$(ProjectDir)ScopeRangefinder.presets.json" DestinationFolder="$(PackagePluginDir)" />
     <Copy SourceFiles="@(ReleaseFontFiles)" DestinationFolder="$(PackagePluginDir)fonts" />
+    <Copy SourceFiles="@(ReleaseWebFiles)" DestinationFolder="$(PackagePluginDir)web" />
     <Delete Files="$(ReleaseZipPath)" />
     <ZipDirectory SourceDirectory="$(PackageRoot)" DestinationFile="$(ReleaseZipPath)" />
     <Message Importance="high" Text="Release package created: $(ReleaseZipPath)" />

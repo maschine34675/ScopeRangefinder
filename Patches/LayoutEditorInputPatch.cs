@@ -19,8 +19,8 @@ namespace ScopeRangefinder
                 commands.Clear();
                 return;
             }
-
-            if (!ScopeRangefinderComponent.BlocksGameMouseInput)
+            if (!ScopeRangefinderComponent.BlocksGameMouseInput
+                && !ScopeRangefinderComponent.IsMouseOverReadoutLive())
             {
                 return;
             }

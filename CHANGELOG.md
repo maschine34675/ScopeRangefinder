@@ -1,4 +1,13 @@
 # Changelog
+## 3.4.0 (in development)
+
+### Added
+
+- The readout can now be placed by **dragging it with the mouse**: while the layout editor (F8) is open and you aim through a scope, a faint frame marks the readout as grabbable — pick it up and drop it where it should sit, on both render paths (in-scope and screen overlay). The frame brightens on hover and turns green while dragging, and grabbing the readout never pulls the trigger. Dragging edits the same per-scope offsets as the arrow buttons (which stay for fine-tuning and typed values), so `Save Scope` / `Reset Scope` keep their exact meaning.
+- The ballistics row's prefixes are now configurable like the others: `HoldLinePrefix` (`HLD`) and `DialLinePrefix` (`DIA`), editable in both editors and covered by style presets — the shipped presets state them explicitly.
+- The Web Style Studio no longer takes the mouse away from the game. The studio window sits over the middle of the picture, which is the exact point the game reads mouse movement from while you look around — so with the studio open and the game focused, aiming did not move. The studio now opens at a size of its own instead of covering most of the picture, and the mouse reaches the game whenever the game is in front; open the F8 editor and the studio is clickable again, because the editor asks the game for a cursor and the library then leaves the mouse alone.
+- **Web Style Studio** — an optional, comfortable second view of the style editor, opened from the F8 window's `Open Style Studio` button when the [Anvil-WebOverlay](https://github.com/maschine34675/WebOverlay) mod (1.11.0 or newer) is installed. A real browser window with: a preset gallery that shows every shipped and saved preset as a rendered thumbnail of the actual readout (so you see a look before applying it), one click to apply it to all scopes or — with the `only this scope` switch — to the scope you are aiming through; a live preview; every Readout, Text, and Background option as proper controls with a real color picker, hex field, and sliders; a font gallery rendered in the actual font files from the `fonts/` folder; and sharing with a paste box that validates and previews a shared style before importing it. The studio and the F8 editor are two views of the same model — both can be open at once, and a change in one shows up in the other. Everything the studio does the F8 editor can do too, so nothing depends on the optional library: without it the button is not shown; in exclusive fullscreen it says why it cannot open. Anvil-WebOverlay is **not** bundled; install it from its own page.
+
 ## 3.3.0
 
 ### Changed
@@ -117,7 +126,7 @@
 ### Added
 
 - Added auto zero (`AutoZeroEnabled`, off by default): zeroes the active optic to the measured distance, to the meter, with no distance limit, accounting for the loaded ammo and every other dynamic factor the game's own calibration uses. Two modes (`AutoZeroMode`):
-  - `Hotkey` (default): pressing `AutoZeroHotkey` (default `J`) zeroes once to the currently measured distance. The zero persists across unscoping until re-pressed, the zeroing dial is used manually, or the sight changes.
+  - `Hotkey` (default): pressing `AutoZeroHotkey` (default `J`) zeroes once to the currently measured distance. The zero persists across unscoping and sight changes until re-pressed on the same sight, the zeroing dial is used manually, or auto zero is switched off. Pressing the hotkey on another sight moves the zero there and gives the first one its own zero back.
   - `Continuous`: the optic follows the measured distance while aiming; the original zeroing is restored on unscope.
 - Added a smooth zeroing transition (`AutoZeroTransitionTime`, default `0.35`s): on larger distance jumps the view eases to the new zero instead of snapping. `0` restores the hard jump.
 - Added an optional predicted bullet trajectory preview (`ShowTrajectoryPreview`), a good way to build an intuitive feel for Tushonka's ballistics: bullet drop, travel time, and real dispersion at range. The line follows the measured distance and ends at the target, fading from a transparent near color to an opaque far color and widening with distance so the arc stays readable when viewed from behind the weapon.

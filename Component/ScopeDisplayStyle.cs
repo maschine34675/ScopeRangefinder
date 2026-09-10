@@ -205,8 +205,19 @@ namespace ScopeRangefinder
                 fileName = fontSpec.Substring(0, separatorIndex).Trim();
                 assetName = fontSpec.Substring(separatorIndex + 1).Trim();
             }
+            string fontsDirectory = System.IO.Path.GetFullPath(GetFontsDirectory());
+            string path = System.IO.Path.GetFullPath(System.IO.Path.Combine(fontsDirectory, fileName));
+            if (!path.StartsWith(
+                    fontsDirectory.TrimEnd(System.IO.Path.DirectorySeparatorChar)
+                        + System.IO.Path.DirectorySeparatorChar,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                _failedCustomFontSpecs.Add(fontSpec);
+                Plugin.LogSource?.LogWarning(
+                    $"Custom font '{fileName}' is not inside the fonts folder; falling back to the game font.");
+                return null;
+            }
 
-            string path = System.IO.Path.Combine(GetFontsDirectory(), fileName);
             if (!System.IO.File.Exists(path))
             {
                 _failedCustomFontSpecs.Add(fontSpec);

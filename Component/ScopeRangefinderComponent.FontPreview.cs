@@ -9,8 +9,8 @@ namespace ScopeRangefinder
 {
     internal partial class ScopeRangefinderComponent
     {
-        private const int PreviewTextureWidth = 256;
-        private const int PreviewTextureHeight = 64;
+        private const int PreviewTextureWidth = 512;
+        private const int PreviewTextureHeight = 128;
         private const float PreviewOrthoHalfWidth = 0.5f;
         private const float PreviewOrthoHalfHeight = 0.125f;
         private const float PreviewFontSize = 1.2f;
@@ -82,11 +82,10 @@ namespace ScopeRangefinder
                 GUILayout.Label("Preview initializing...");
                 return;
             }
-
             GUILayout.Box(
                 texture,
-                GUILayout.Width(PreviewTextureWidth),
-                GUILayout.Height(PreviewTextureHeight));
+                GUILayout.Width(PreviewTextureWidth / 2),
+                GUILayout.Height(PreviewTextureHeight / 2));
         }
         private void UpdateFontPreview()
         {
@@ -131,6 +130,86 @@ namespace ScopeRangefinder
             RenderPreview();
             _renderedPreviewSignature = signature;
             _previewRendered = true;
+        }
+        internal byte[] RenderStyleThumbnailPng(StyleSnapshot style)
+        {
+            bool hadOverride = ActiveStyle.HasOverride;
+            StyleSnapshot previous = hadOverride ? ActiveStyle.CurrentOverride : null;
+            ActiveStyle.SetOverride(style);
+            try
+            {
+                TMP_FontAsset font = ScopeDisplayStyle.LoadRangefinderTmpFont();
+                if (font == null)
+                {
+                    return null;
+                }
+
+                EnsurePreviewRig();
+                _thumbnailTexture ??= new RenderTexture(PreviewTextureWidth, PreviewTextureHeight, 16)
+                {
+                    name = "ScopeRangefinderThumbnail"
+                };
+                _previewCamera.targetTexture = _thumbnailTexture;
+                try
+                {
+                    ApplyPreviewAppearance(font);
+                    RenderPreview();
+                    return ReadTexturePng(_thumbnailTexture);
+                }
+                finally
+                {
+                    _previewCamera.targetTexture = _previewTexture;
+                    _previewRendered = false;
+                }
+            }
+            finally
+            {
+                if (hadOverride)
+                {
+                    ActiveStyle.SetOverride(previous);
+                }
+                else
+                {
+                    ActiveStyle.ClearOverride();
+                }
+            }
+        }
+        internal byte[] RenderLivePreviewPng()
+        {
+            TMP_FontAsset font = ScopeDisplayStyle.LoadRangefinderTmpFont();
+            if (font == null)
+            {
+                return null;
+            }
+
+            EnsurePreviewRig();
+            ApplyPreviewAppearance(font);
+            RenderPreview();
+            return ReadTexturePng(_previewTexture);
+        }
+
+        private RenderTexture _thumbnailTexture;
+
+        private static byte[] ReadTexturePng(RenderTexture source)
+        {
+            RenderTexture active = RenderTexture.active;
+            Texture2D readback = null;
+            try
+            {
+                RenderTexture.active = source;
+                readback = new Texture2D(PreviewTextureWidth, PreviewTextureHeight, TextureFormat.RGB24, false);
+                readback.ReadPixels(new Rect(0, 0, PreviewTextureWidth, PreviewTextureHeight), 0, 0);
+                readback.Apply();
+                return readback.EncodeToPNG();
+            }
+            finally
+            {
+                RenderTexture.active = active;
+                if (readback != null)
+                {
+                    Destroy(readback);
+                }
+            }
         }
 
         private void EnsurePreviewRig()
@@ -420,6 +499,13 @@ namespace ScopeRangefinder
                 _previewTexture.Release();
                 Destroy(_previewTexture);
                 _previewTexture = null;
+            }
+
+            if (_thumbnailTexture != null)
+            {
+                _thumbnailTexture.Release();
+                Destroy(_thumbnailTexture);
+                _thumbnailTexture = null;
             }
 
             if (_previewTextMaterial != null)

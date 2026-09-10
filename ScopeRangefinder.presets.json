@@ -287,7 +287,9 @@
     "LED Display Coral Red": {
       "Readout.BallisticsHoldUnit": "MinutesOfAngle",
       "Readout.BallisticsLine": "Hold",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "true",
@@ -310,7 +312,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "0.004"
     },
     "VCR Chromatic": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "true",
@@ -333,7 +338,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "-0.001633802"
     },
     "DSEG7 Mini RGB Split": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "false",
@@ -356,7 +364,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "-0.001633802"
     },
     "B612 Cockpit Phosphor": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "true",
@@ -379,7 +390,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "0.0002441316"
     },
     "DSEG14 Classic Amber": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "true",
@@ -402,7 +416,11 @@
       "Scope Text.ScopeWorldTextOffsetY": "0.004"
     },
     "DT16 Cyrillic": {
+      "Readout.BallisticsHoldUnit": "Milliradians",
+      "Readout.BallisticsLine": "Hold",
+      "Readout.DialLinePrefix": "ДИАЛ",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "ХОЛД",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "РАСТ",
       "Readout.ShowUnitSuffix": "true",
@@ -425,7 +443,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "0.004"
     },
     "LCD14 Starburst Red": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "true",
@@ -448,7 +469,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "-0.01196244"
     },
     "Oxanium HUD Cyan": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "true",
@@ -471,7 +495,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "-0.005389671"
     },
     "Quantico Tactical Amber": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "true",
@@ -494,7 +521,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "0.003061033"
     },
     "Rajdhani Tech Chartreuse": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "false",
@@ -517,7 +547,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "-0.001633803"
     },
     "Tech Mono Ice": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "true",
@@ -540,7 +573,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "-0.001633803"
     },
     "Terminal Green": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "true",
@@ -563,7 +599,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "0.002122066"
     },
     "RAPTAR EFT Style": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "false",
@@ -586,7 +625,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "0.004"
     },
     "RAPTAR Lite ES": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "false",
@@ -609,7 +651,10 @@
       "Scope Text.ScopeWorldTextOffsetY": "0.0002441316"
     },
     "RAPTAR S": {
+      "Readout.BallisticsLine": "Off",
+      "Readout.DialLinePrefix": "DIA",
       "Readout.DistanceUnit": "Meters",
+      "Readout.HoldLinePrefix": "HLD",
       "Readout.NoDistanceText": "----",
       "Readout.RangeLinePrefix": "RNG",
       "Readout.ShowUnitSuffix": "false",

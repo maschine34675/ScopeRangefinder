@@ -120,6 +120,7 @@ namespace ScopeRangefinder
 
             _styleConfigSaveDueAt = Time.realtimeSinceStartup + StyleSaveDebounceSeconds;
             InvalidateStyleComparison();
+            NotifyStyleStudioStateChanged();
         }
         private void CommitDueStyleTextEdits(bool force)
         {
@@ -184,6 +185,8 @@ namespace ScopeRangefinder
                 return;
             }
 
+            DrawStyleStudioButton();
+
             bool hasScope = !string.IsNullOrEmpty(_currentLayoutKey);
             bool applyToScope = _presetApplyToScope && hasScope;
 
@@ -245,6 +248,8 @@ namespace ScopeRangefinder
                 DrawStyleEnumCycle("Hold Unit", Plugin.BallisticsHoldUnit);
                 DrawStyleTextField("Range Prefix", Plugin.RangeLinePrefix);
                 DrawStyleTextField("Zeroing Prefix", Plugin.ZeroLinePrefix);
+                DrawStyleTextField("Hold Prefix", Plugin.HoldLinePrefix);
+                DrawStyleTextField("Dial Prefix", Plugin.DialLinePrefix);
                 DrawStyleTextField("No-Target Text", Plugin.NoDistanceText);
                 EndStyleIndent();
             }
@@ -318,6 +323,30 @@ namespace ScopeRangefinder
             }
 
             _editorStatus = $"Paste failed: {error}";
+        }
+        private void DrawStyleStudioButton()
+        {
+            if (!StyleStudioGate.IsLoaded)
+            {
+                return;
+            }
+
+            string reason = StyleStudioUnavailableReason;
+            GUILayout.BeginHorizontal();
+            GUI.enabled = reason == null;
+            if (GUILayout.Button(IsStyleStudioOpen ? "Close Style Studio" : "Open Style Studio", GUILayout.ExpandWidth(true)))
+            {
+                GUI.enabled = true;
+                ToggleStyleStudio();
+                GUIUtility.ExitGUI();
+            }
+
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+            if (reason != null)
+            {
+                GUILayout.Label(reason, WrappedLabelStyle);
+            }
         }
 
         private void DrawPresetBrowser(bool hasScope, bool applyToScope)

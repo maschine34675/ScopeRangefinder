@@ -15,6 +15,8 @@ namespace ScopeRangefinder
         public HoldUnit BallisticsHoldUnit;
         public string RangeLinePrefix;
         public string ZeroLinePrefix;
+        public string HoldLinePrefix;
+        public string DialLinePrefix;
         public string NoDistanceText;
 
         public Color TextColor;
@@ -44,6 +46,8 @@ namespace ScopeRangefinder
                 BallisticsHoldUnit = Default(Plugin.BallisticsHoldUnit),
                 RangeLinePrefix = Default(Plugin.RangeLinePrefix),
                 ZeroLinePrefix = Default(Plugin.ZeroLinePrefix),
+                HoldLinePrefix = Default(Plugin.HoldLinePrefix),
+                DialLinePrefix = Default(Plugin.DialLinePrefix),
                 NoDistanceText = Default(Plugin.NoDistanceText),
                 TextColor = Default(Plugin.ScopeWorldTextColor),
                 FontSource = Default(Plugin.ScopeFontSource),
@@ -102,6 +106,8 @@ namespace ScopeRangefinder
                 ["Readout.BallisticsHoldUnit"] = (s, v) => s.BallisticsHoldUnit = ConvertLikeConfig(Plugin.BallisticsHoldUnit, v),
                 ["Readout.RangeLinePrefix"] = (s, v) => s.RangeLinePrefix = ConvertLikeConfig(Plugin.RangeLinePrefix, v),
                 ["Readout.ZeroLinePrefix"] = (s, v) => s.ZeroLinePrefix = ConvertLikeConfig(Plugin.ZeroLinePrefix, v),
+                ["Readout.HoldLinePrefix"] = (s, v) => s.HoldLinePrefix = ConvertLikeConfig(Plugin.HoldLinePrefix, v),
+                ["Readout.DialLinePrefix"] = (s, v) => s.DialLinePrefix = ConvertLikeConfig(Plugin.DialLinePrefix, v),
                 ["Readout.NoDistanceText"] = (s, v) => s.NoDistanceText = ConvertLikeConfig(Plugin.NoDistanceText, v),
                 ["Scope Text.ScopeWorldTextColor"] = (s, v) => s.TextColor = ConvertLikeConfig(Plugin.ScopeWorldTextColor, v),
                 ["Scope Text.ScopeFontSource"] = (s, v) => s.FontSource = ConvertLikeConfig(Plugin.ScopeFontSource, v),
@@ -148,6 +154,7 @@ namespace ScopeRangefinder
         private static StyleSnapshot _override;
 
         public static bool HasOverride => _override != null;
+        public static StyleSnapshot CurrentOverride => _override;
 
         public static void SetOverride(StyleSnapshot snapshot)
         {
@@ -167,6 +174,8 @@ namespace ScopeRangefinder
         public static HoldUnit BallisticsHoldUnit => _override?.BallisticsHoldUnit ?? Plugin.BallisticsHoldUnit.Value;
         public static string RangeLinePrefix => _override != null ? _override.RangeLinePrefix : Plugin.RangeLinePrefix.Value;
         public static string ZeroLinePrefix => _override != null ? _override.ZeroLinePrefix : Plugin.ZeroLinePrefix.Value;
+        public static string HoldLinePrefix => _override != null ? _override.HoldLinePrefix : Plugin.HoldLinePrefix?.Value ?? "HLD";
+        public static string DialLinePrefix => _override != null ? _override.DialLinePrefix : Plugin.DialLinePrefix?.Value ?? "DIA";
         public static string NoDistanceText => _override != null ? _override.NoDistanceText : Plugin.NoDistanceText.Value;
 
         public static Color TextColor => _override?.TextColor ?? Plugin.ScopeWorldTextColor.Value;

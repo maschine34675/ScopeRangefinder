@@ -1,0 +1,107 @@
+:root {
+  --bg: #14161a;
+  --panel: #1c1f25;
+  --panel2: #232830;
+  --ink: #e6e6e6;
+  --dim: #8a9099;
+  --accent: #ff543a;
+  --ok: #6fcf72;
+  --err: #ff6b6b;
+  --border: #2e343d;
+  --radius: 6px;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+/* The page never scrolls as a whole (only the gallery and options columns do),
+   so the window-level scrollbar that a 1px calc() mismatch used to produce is
+   gone for good: header and grid share the height via flex instead of math. */
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--ink); }
+body { display: flex; flex-direction: column; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { background: var(--panel2); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 10px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:disabled { opacity: .45; cursor: default; }
+button.mini { padding: 2px 8px; font-size: 12px; }
+input[type=text], textarea { background: var(--panel2); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 8px; }
+input[type=text]:focus, textarea:focus { outline: none; border-color: var(--accent); }
+.hidden { display: none !important; }
+.dim { color: var(--dim); }
+
+.top { padding: 10px 14px 6px; border-bottom: 1px solid var(--border); background: var(--panel); flex: none; }
+.top .line { display: flex; align-items: center; gap: 10px; padding: 2px 0; }
+.top .k { color: var(--dim); width: 86px; }
+.top .v { font-weight: 600; }
+.tag { font-size: 11px; padding: 1px 6px; border-radius: 10px; background: #3a2d12; color: #f2c14e; }
+/* Fixed height and no wrap: a status appearing or vanishing must never move
+   the layout below it by even a pixel. */
+.status { height: 18px; line-height: 18px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--dim); padding-top: 2px; }
+.status.ok { color: var(--ok); }
+.status.err { color: var(--err); }
+
+.grid { display: grid; grid-template-columns: 320px 1fr; gap: 0; flex: 1; min-height: 0; }
+.gallery { border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; }
+.options { overflow: auto; padding: 10px 14px; }
+
+.bar { display: flex; align-items: center; gap: 8px; padding: 8px 10px; }
+.bar.wrap { flex-wrap: wrap; border-top: 1px solid var(--border); }
+.bar .h { font-weight: 600; flex: 1; }
+.bar input[type=text] { flex: 1; min-width: 120px; }
+.switch { display: flex; align-items: center; gap: 6px; color: var(--dim); cursor: pointer; user-select: none; }
+
+.tiles { overflow: auto; padding: 0 10px 8px; display: grid; grid-template-columns: 1fr; gap: 8px; flex: 1; min-height: 0; }
+.tile { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px; cursor: pointer; position: relative; }
+.tile:hover { border-color: var(--accent); }
+.tile.selected { border-color: var(--ok); box-shadow: 0 0 0 1px var(--ok) inset; }
+.tile.assigned { border-color: #5aa0ff; }
+.tile img { display: block; width: 100%; height: 64px; object-fit: contain; background: #141414; border-radius: 4px; }
+.tile .ph { height: 64px; display: flex; align-items: center; justify-content: center; color: var(--dim); background: #141414; border-radius: 4px; font-size: 12px; }
+.tile .name { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.tile .name span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile .acts { display: flex; gap: 4px; }
+.tile .acts button { padding: 1px 6px; font-size: 11px; }
+.tile .acts button.danger { color: var(--err); }
+.tile.builtin .acts { visibility: hidden; }
+
+.paste { padding: 8px 10px; border-top: 1px solid var(--border); }
+.paste textarea { width: 100%; height: 90px; resize: vertical; font-family: Consolas, monospace; font-size: 12px; }
+.paste .row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.paste .row .dim { flex: 1; font-size: 12px; }
+
+.preview-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px; margin-bottom: 8px; }
+.preview-label { color: var(--dim); font-size: 12px; margin-bottom: 4px; }
+.preview { display: block; width: 512px; height: 128px; max-width: 100%; background: #141414; border-radius: 4px; image-rendering: auto; }
+.hint { background: #2b2312; border: 1px solid #5c4a1a; color: #f2c14e; border-radius: var(--radius); padding: 6px 10px; margin-bottom: 8px; font-size: 12px; }
+
+details { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; background: var(--panel); }
+summary { cursor: pointer; padding: 6px 10px; font-weight: 600; user-select: none; }
+/* Two columns once there is room, and a hard cap on how far a row stretches:
+   a select spanning 1300px is not easier to read than one spanning 300px. */
+.fields { padding: 4px 10px 8px; display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 460px)); column-gap: 28px; justify-content: start; }
+.field { display: grid; grid-template-columns: 130px 1fr 58px; align-items: center; gap: 8px; padding: 3px 0; min-width: 0; }
+.field label { color: var(--dim); }
+.field .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--dim); font-size: 12px; }
+/* The value next to a slider is itself an input for direct entry: styled to
+   read as a value at rest and reveal itself as a field on focus. */
+.field input.val { width: 58px; padding: 2px 4px; background: transparent; border: 1px solid transparent; border-radius: 4px; }
+.field input.val:hover { border-color: var(--border); }
+.field input.val:focus { background: var(--panel2); border-color: var(--accent); color: var(--ink); outline: none; }
+/* Neutral sliders: two dozen of them in accent color turned the panel into a
+   light show; the accent stays for focus/hover borders only. */
+.field input[type=range] { width: 100%; accent-color: #7d848d; }
+.field input[type=text] { width: 100%; }
+.field select { width: 100%; background: var(--panel2); border: 1px solid var(--border); border-radius: var(--radius); padding: 3px 6px; }
+.field .check { justify-self: start; }
+.field .color { display: flex; align-items: center; gap: 8px; }
+.field .color input[type=color] { width: 40px; height: 24px; border: 1px solid var(--border); background: none; padding: 0; border-radius: 4px; }
+.field .color input[type=range] { flex: 1; accent-color: #7d848d; }
+.field .color .hex { width: 92px; font-family: Consolas, monospace; font-size: 12px; }
+.fontlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; grid-column: 1 / -1; margin: 4px 0; max-width: 960px; }
+.fontlist .f { border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 8px; cursor: pointer; background: var(--panel2); text-align: center; overflow: hidden; }
+.fontlist .f:hover { border-color: var(--accent); }
+.fontlist .f.selected { border-color: var(--ok); }
+.fontlist .f .sample { font-size: 18px; line-height: 1.2; white-space: nowrap; }
+.fontlist .f .fn { font-size: 10px; color: var(--dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.field.span { grid-template-columns: 1fr; grid-column: 1 / -1; }

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scope Rangefinder - Style Studio</title>
+<link rel="stylesheet" href="studio.css">
+</head>
+<body>
+<header class="top">
+  <div class="line">
+    <span class="k">Global style</span>
+    <span id="globalName" class="v">-</span>
+    <span id="modified" class="tag hidden">modified</span>
+    <button id="copyGlobal" class="mini" title="Copy the current look as JSON">Copy</button>
+  </div>
+  <div class="line">
+    <span class="k">This scope</span>
+    <span id="scopeName" class="v">-</span>
+    <span id="scopeKey" class="dim"></span>
+    <button id="clearScope" class="mini hidden" title="Back to the global style on this scope">Clear</button>
+  </div>
+  <div id="status" class="status"></div>
+</header>
+
+<main class="grid">
+  <section class="gallery">
+    <div class="bar">
+      <span class="h">Presets</span>
+      <label class="switch" title="Where a click applies the preset">
+        <input type="checkbox" id="applyToScope">
+        <span>only this scope</span>
+      </label>
+    </div>
+    <div id="gallery" class="tiles"></div>
+    <div class="bar wrap">
+      <input id="saveName" type="text" placeholder="Save current as ..." spellcheck="false">
+      <button id="saveBtn">Save</button>
+      <button id="pasteBtn" title="Import a shared preset (JSON) from the clipboard">Paste</button>
+    </div>
+    <div id="pasteBox" class="paste hidden">
+      <textarea id="pasteText" placeholder="Paste a shared style here" spellcheck="false"></textarea>
+      <div class="row">
+        <div id="pastePreview" class="dim">Waiting for JSON ...</div>
+        <button id="importBtn" disabled>Import</button>
+        <button id="cancelPaste">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="options">
+    <div class="preview-wrap">
+      <div class="preview-label">Live preview</div>
+      <img id="preview" class="preview" alt="">
+      <div id="previewHint" class="dim hidden">Preview updates through the game; the readout in the scope is the truth.</div>
+    </div>
+    <div id="scopeHint" class="hint hidden"></div>
+
+    <details open>
+      <summary>Readout</summary>
+      <div class="fields" data-group="readout"></div>
+    </details>
+    <details open>
+      <summary>Text</summary>
+      <div class="fields" data-group="text"></div>
+    </details>
+    <details>
+      <summary>Background</summary>
+      <div class="fields" data-group="background"></div>
+    </details>
+  </section>
+</main>
+
+<script src="studio.js"></script>
+</body>
+</html>

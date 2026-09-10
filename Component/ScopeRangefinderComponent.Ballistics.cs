@@ -11,8 +11,6 @@ namespace ScopeRangefinder
         private const float BallisticsSampleStep = 0.005f;
         private const float BallisticsMaxFlightTime = 13f;
         private const float MilliradiansPerMinuteOfAngle = 0.2908882f;
-        internal const string HoldLinePrefix = "HLD";
-        internal const string DialLinePrefix = "DIA";
 
         private Weapon _activeWeapon;
 
@@ -201,7 +199,7 @@ namespace ScopeRangefinder
             if (!TryGetBallisticsSolution(out BallisticsSolution solution))
             {
                 return ComposeReadoutLine(
-                    mode == BallisticsLineMode.Dial ? DialLinePrefix : HoldLinePrefix,
+                    mode == BallisticsLineMode.Dial ? ActiveStyle.DialLinePrefix : ActiveStyle.HoldLinePrefix,
                     ActiveStyle.NoDistanceText);
             }
             bool dialUnavailable = solution.BestDialDistance < 0
@@ -209,13 +207,13 @@ namespace ScopeRangefinder
             if (mode == BallisticsLineMode.Dial && dialUnavailable)
             {
                 return ComposeReadoutLine(
-                    DialLinePrefix, FormatHoldValue(solution.HoldMilliradians, solution.MeasuredDistance));
+                    ActiveStyle.DialLinePrefix, FormatHoldValue(solution.HoldMilliradians, solution.MeasuredDistance));
             }
 
             if (mode == BallisticsLineMode.Dial)
             {
                 string text = ComposeReadoutLine(
-                    DialLinePrefix, FormatDistanceValue(solution.BestDialDistance, withSuffix: false));
+                    ActiveStyle.DialLinePrefix, FormatDistanceValue(solution.BestDialDistance, withSuffix: false));
                 if (Mathf.Abs(solution.BestDialResidualMilliradians) >= DialResidualThresholdMilliradians)
                 {
                     text += FormatDialResidual(solution.BestDialResidualMilliradians, solution.MeasuredDistance);
@@ -225,7 +223,7 @@ namespace ScopeRangefinder
             }
 
             return ComposeReadoutLine(
-                HoldLinePrefix, FormatHoldValue(solution.HoldMilliradians, solution.MeasuredDistance));
+                ActiveStyle.HoldLinePrefix, FormatHoldValue(solution.HoldMilliradians, solution.MeasuredDistance));
         }
         private const float DialResidualThresholdMilliradians = 0.15f;
         private static string FormatDialResidual(float milliradians, int distanceMeters)
