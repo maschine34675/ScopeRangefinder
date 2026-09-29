@@ -88,6 +88,7 @@ namespace ScopeRangefinder
             HandleLayoutEditorHotkey();
             UpdateFontPreview();
             UpdateStyleStudio();
+            UpdateManualZeroing();
 
             if (!Plugin.Enabled.Value)
             {

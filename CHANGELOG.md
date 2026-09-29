@@ -1,10 +1,27 @@
 # Changelog
+
+## 3.5.0
+
+### Added
+
+- **Manual zeroing** — two options for ranging a target first and dialing the zero yourself, in the new `Manual Zeroing` section of the F12 settings. Both are off by default, and neither needs auto zero.
+  - `MaxZeroingDistance` lets every sight with a zeroing dial go past its vanilla limit (100–450 m in the base game), up to the distance you set (at most 1000 m), continuing in the sight's own step size. The game's dial, its zeroing panel, and this mod's zero and dial rows all use the extended steps.
+  - `ZeroForLoadedAmmo` calculates the zeroing for the round in the chamber, or the next one in the magazine, instead of the weapon's default ammo, and again whenever that round changes, so a dialed distance hits that distance with the ammo you actually loaded.
+
+  Only your own weapons are affected; bots and other players keep the game's zeroing.
+
+### Fixed
+
+- A hotkey auto zero now survives the game rebuilding the optic's calibration — after re-equipping or modding the weapon, and with `ZeroForLoadedAmmo` on after a change of the loaded round. It stays at its distance, recalculated for the round loaded now, instead of silently dropping back to the dial until the next key press.
+- Auto zero no longer leaves a bullet-trajectory calculator behind each time it zeroes. The game draws these from one shared pool for every shot in the raid; continuous mode, which zeroes again whenever the measured distance changes, could drain that pool, after which every shot allocated a new one.
+
 ## 3.4.0
 
 ### Added
 
 - The readout can now be placed by **dragging it with the mouse**: while the layout editor (F8) is open and you aim through a scope, a faint frame marks the readout as grabbable — pick it up and drop it where it should sit, on both render paths (in-scope and screen overlay). The frame brightens on hover and turns green while dragging, and grabbing the readout never pulls the trigger. Dragging edits the same per-scope offsets as the arrow buttons (which stay for fine-tuning and typed values), so `Save Scope` / `Reset Scope` keep their exact meaning.
 - The ballistics row's prefixes are now configurable like the others: `HoldLinePrefix` (`HLD`) and `DialLinePrefix` (`DIA`), editable in both editors and covered by style presets — the shipped presets state them explicitly.
+- The Web Style Studio no longer takes the mouse away from the game. The studio window sits over the middle of the picture, which is the exact point the game reads mouse movement from while you look around — so with the studio open and the game focused, aiming did not move. The studio now opens at a size of its own instead of covering most of the picture, and the mouse reaches the game whenever the game is in front; open the F8 editor and the studio is clickable again, because the editor asks the game for a cursor and the library then leaves the mouse alone.
 - **Web Style Studio** — an optional, comfortable second view of the style editor, opened from the F8 window's `Open Style Studio` button when the [Anvil-WebOverlay](https://github.com/maschine34675/WebOverlay) mod (1.11.0 or newer) is installed. A real browser window with: a preset gallery that shows every shipped and saved preset as a rendered thumbnail of the actual readout (so you see a look before applying it), one click to apply it to all scopes or — with the `only this scope` switch — to the scope you are aiming through; a live preview; every Readout, Text, and Background option as proper controls with a real color picker, hex field, and sliders; a font gallery rendered in the actual font files from the `fonts/` folder; and sharing with a paste box that validates and previews a shared style before importing it. The studio and the F8 editor are two views of the same model — both can be open at once, and a change in one shows up in the other. Everything the studio does the F8 editor can do too, so nothing depends on the optional library: without it the button is not shown; in exclusive fullscreen it says why it cannot open. Anvil-WebOverlay is **not** bundled; install it from its own page.
 
 ## 3.3.0

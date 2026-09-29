@@ -17,7 +17,7 @@ namespace ScopeRangefinder
     {
         public const string PluginGuid = "com.maschine.ScopeRangefinder";
         public const string PluginName = "maschine-ScopeRangefinder";
-        public const string PluginVersion = "3.4.0";
+        public const string PluginVersion = "3.5.0";
         public const string PiPDisablerGuid = "com.fiodor.pipdisabler";
         private const string MilkorReflexSightTemplateId = "6284bd5f95250a29bc628a30";
 
@@ -63,6 +63,8 @@ namespace ScopeRangefinder
         public static ConfigEntry<Color> AutoZeroTrajectoryFarColor;
         public static ConfigEntry<bool> AutoZeroImpactSpreadCircle;
         public static ConfigEntry<Color> AutoZeroSpreadCircleColor;
+        public static ConfigEntry<int> MaxZeroingDistance;
+        public static ConfigEntry<bool> ZeroForLoadedAmmo;
         public static ConfigEntry<KeyboardShortcut> LayoutEditorToggle;
         public static ConfigEntry<string> NonMagnifiedSights;
         public static ConfigEntry<float> MeasurementHoldTime;
@@ -334,6 +336,25 @@ namespace ScopeRangefinder
                     "Uses the game's own formula: weapon accuracy, barrel durability, ammo factor, buffs, and overheat."));
             AutoZeroSpreadCircleColor = Config.Bind("Auto Zero", "AutoZeroSpreadCircleColor", new Color(1f, 0.25f, 0.1f, 0.85f),
                 TaggedAdvanced("Dispersion Ring Color", 0, "Color of the impact dispersion ring."));
+            MaxZeroingDistance = Config.Bind(
+                "Manual Zeroing",
+                "MaxZeroingDistance",
+                0,
+                new ConfigDescription(
+                    "Lets every sight with a zeroing dial go past its vanilla limit, up to this distance in meters, " +
+                    "continuing in the sight's own step size (50 m for nearly all of them). Vanilla sights end between " +
+                    "100 and 450 m. 0 keeps the vanilla steps. Leave at 0 when another mod already extends the steps.",
+                    new AcceptableValueRange<int>(0, 1000),
+                    new ConfigurationManagerAttributes { DispName = "Max Zeroing Distance (m)", Order = 20 }));
+            ZeroForLoadedAmmo = Config.Bind(
+                "Manual Zeroing",
+                "ZeroForLoadedAmmo",
+                false,
+                Tagged("Zero for Loaded Ammo", 10,
+                    "The game calculates a sight's zeroing for the weapon's default ammo, whatever is loaded. " +
+                    "With this on, it is calculated for the round in the chamber - or the next one in the magazine - " +
+                    "and again whenever that round changes, so a dialed distance hits that distance. " +
+                    "Leave off when another mod already does this."));
 
             LayoutEditorToggle = Config.Bind(
                 "General",

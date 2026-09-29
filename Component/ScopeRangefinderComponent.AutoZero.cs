@@ -139,7 +139,8 @@ namespace ScopeRangefinder
             bool hasMeasurement)
         {
             bool applied = _autoZeroSight == sight && _autoZeroScopeIndex == scopeIndex;
-            if (applied && pointIndex != _autoZeroPointIndex)
+            bool rebuilt = applied && points != _autoZeroLiveArray;
+            if (applied && !rebuilt && pointIndex != _autoZeroPointIndex)
             {
                 RestoreAutoZero(weaponAnimation);
                 return;
@@ -169,8 +170,37 @@ namespace ScopeRangefinder
             {
                 return;
             }
+            if (points != _autoZeroLiveArray && _autoZeroLastDistance > 0)
+            {
+                RetargetHeldZero(weapon, ammo, sight, scopeIndex, points, pointIndex);
+            }
 
             ApplyCalibrationPointStep(sight, scopeIndex, points, pointIndex, weaponAnimation);
+        }
+
+        private void RetargetHeldZero(
+            Weapon weapon,
+            AmmoTemplate ammo,
+            SightComponent sight,
+            int scopeIndex,
+            Vector3[] points,
+            int pointIndex)
+        {
+            int distance = _autoZeroLastDistance;
+            if (!TryCalculateCalibrationPoint(weapon, ammo, distance, out Vector3 target))
+            {
+                return;
+            }
+            EnsureAutoZeroBackup(sight, scopeIndex, points);
+            _autoZeroTargetPoint = target;
+            _autoZeroLastDistance = distance;
+            _autoZeroLastAmmo = ammo;
+            _autoZeroPointIndex = pointIndex;
+            _autoZeroPointInitialized = false;
+            if (Plugin.LogScopeKeys.Value)
+            {
+                Plugin.LogSource?.LogInfo($"Hotkey zero kept at {distance} m, recalculated for {ammo?._name}.");
+            }
         }
         private void ApplyCalibrationPointStep(
             SightComponent sight,
@@ -286,12 +316,7 @@ namespace ScopeRangefinder
             {
                 return false;
             }
-
-            Vector3[] data = weapon.CreateOpticCalibrationData(
-                new[] { distance },
-                ammo,
-                weapon.SpeedFactor,
-                0.001f);
+            Vector3[] data = OpticCalibration.CalculatePoints(new[] { distance }, ammo, weapon.SpeedFactor);
 
             if (data == null || data.Length == 0)
             {

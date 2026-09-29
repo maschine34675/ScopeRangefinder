@@ -30,7 +30,8 @@ The mod includes layout presets for vanilla scopes and an in-game editor (F8) fo
 - Optional background plate behind the readout
 - Auto zero: precise, meter-accurate zeroing to the measured distance, per hotkey or continuously, instead of the nearest fixed dial step
 - Optional predicted bullet trajectory and impact dispersion ring, a great way to build a feel for Tushonka's ballistics
-- Makes BetterZeroing, ExtendedZeroRanges, and AutoRanging unnecessary; compatible with all three if installed anyway (see Notes)
+- Manual zeroing aids for ranging first and dialing by hand: zeroing steps past the vanilla limit, and zeroing calculated for the round actually loaded instead of the weapon's default ammo
+- Makes BetterZeroing, ExtendedZeroRanges, and AutoRanging unnecessary, whether you zero by hand or automatically; compatible with all three if installed anyway (see Notes)
 - Fallback screen overlay mode for PiP-Disabler compatibility
 - Optional Web Style Studio: a browser-based view of the style editor with a thumbnail preset gallery, real color picker, and font gallery, when Anvil-WebOverlay is installed
 
@@ -58,7 +59,7 @@ The mod includes layout presets for vanilla scopes and an in-game editor (F8) fo
 
 4. Check `BepInEx/LogOutput.log` for:
 
-   `maschine-ScopeRangefinder v3.4.0 loaded (build ...).`
+   `maschine-ScopeRangefinder v<version> loaded (build ...).`
 
 Fresh installs start with the showcase preset (`LED Display Coral Red`) applied — the defaults are its values. When updating from 2.2.0 or older, the first start saves your previous look as the style preset `My Settings (pre-2.3.0)` and applies the showcase preset once; your old look stays one click away in the editor's preset list. Updates from 2.3.x keep your look untouched.
 
@@ -66,7 +67,7 @@ If you update from 1.0.0 and still have `BepInEx/plugins/maschine-ScopeRangefind
 
 ## Configuration
 
-Everything visual — style presets, fonts, colors, readout rows, background plate — is configured in the mod's own in-game editor (`F8`, see below). The F12 settings menu keeps only the non-style categories: General, Activation, Auto Zero, and Developer. All settings still live under their unchanged keys in the config file, so existing configs, hand edits, and style presets keep working.
+Everything visual — style presets, fonts, colors, readout rows, background plate — is configured in the mod's own in-game editor (`F8`, see below). The F12 settings menu keeps only the non-style categories: General, Activation, Measurement, Auto Zero, Manual Zeroing, and Developer. All settings still live under their unchanged keys in the config file, so existing configs, hand edits, and style presets keep working.
 
 Main config file:
 
@@ -322,6 +323,24 @@ Notes:
 - Everything inside the dispersion ring can be hit; nothing outside of it. The ring uses the game's own spread formula.
 - BetterZeroing, ExtendedZeroRanges, and AutoRanging are no longer needed once you use auto zero, since it already zeroes more precisely and without the dial's distance limit. All three remain compatible if you keep them installed: BetterZeroing and ExtendedZeroRanges work fine alongside auto zero with no configuration, and AutoRanging is automatically paused while `AutoZeroEnabled` is on so the two mods do not fight over the zeroing (it works normally again whenever auto zero is off).
 
+### Manual Zeroing
+
+For ranging a target first and then dialing the zero yourself. Both options change only what the game's own zeroing is calculated from: turning the dial stays yours, and neither needs auto zero.
+
+| Key | Default | Description |
+| --- | --- | --- |
+| `MaxZeroingDistance` | `0` | Lets every sight with a zeroing dial go past its vanilla limit, up to this distance in meters (at most 1000), in the sight's own step size — 50 m for nearly all of them. Vanilla sights end between 100 and 450 m. `0` keeps the vanilla steps |
+| `ZeroForLoadedAmmo` | `false` | The game calculates a sight's zeroing for the weapon's default ammo, whatever is loaded. With this on, it is calculated for the round in the chamber, or the next one in the magazine, and again whenever that round changes, so a dialed distance hits that distance with the ammo you actually loaded |
+
+Notes:
+
+- Only your own weapons are affected; bots and other players keep the game's zeroing. In Fika, the game of another player who does not use the same limit shows your dial at their own highest step.
+- Sights without a dial (a single fixed zeroing distance) keep it. The Milkor M2A1 reflex sight keeps its vanilla steps: it is a grenade launcher sight that tilts along a fixed table ending at 400 m.
+- The step you dial is saved with the weapon, as in the base game. Lowering the limit moves a dial that stood past the new end to the highest remaining step. Without this mod, the game resets a step it does not know to the sight's first one.
+- An empty weapon keeps the zero of the last round it was loaded with. With a magazine of mixed ammo, the zero follows each chambered round, so it can shift slightly between shots.
+- A hotkey auto zero stays at its distance when a different round is chambered; with `ZeroForLoadedAmmo` on, it is recalculated for that round.
+- If you keep BetterZeroing or ExtendedZeroRanges installed, leave the matching option here off so the two mods do not do the same job twice.
+
 ### Legacy Screen Overlay
 
 The fallback screen overlay (used while PiP-Disabler actually suppresses the vanilla optic camera) has no dedicated options. It honors the shared style options: text color, font (game and system fonts; custom font files are a TMP feature and fall back to the game font), black outline, background plate toggle/color/size, vertical text offset, the zeroing line, and all readout format options — so style presets restyle the overlay too. SDF-bound options (thickness, glow, letter spacing, chromatic aberration, TMP font bundles) only affect the in-scope display.
@@ -361,6 +380,7 @@ float meters = (float)api?.GetProperty("LastMeasuredDistanceMeters").GetValue(nu
 float when = (float)api?.GetProperty("LastMeasurementTime").GetValue(null) ?? 0f;
 if (meters > 0f && Time.time - when < 3f)
 {
+    // fresh measurement
 }
 ```
 
@@ -393,7 +413,7 @@ Semantics:
 
 - Red dots, holographics, and iron sights are not affected, with one configurable exception: the sights listed under `NonMagnifiedSights` (by default the Milkor M2A1 reflex sight, so grenade launchers get a measured distance). They have no optic camera, so they use the screen overlay and are positioned with the layout editor (F8) like the overlay path in general.
 - The mod measures distance from the active optic camera direction.
-- The readout itself never changes weapon zeroing, ballistics, or point of impact; only enabling auto zero does, and only for the optic it's applied to.
+- The readout itself never changes weapon zeroing, ballistics, or point of impact. Only auto zero and the two manual zeroing options do, and only for your own weapons.
 - With PiP-Disabler installed, the mod follows its runtime state per scope: while PiP is actually suppressed, the fallback screen overlay is used; scopes on PiP-Disabler's bypass list (or with its global toggle off) get the full in-scope readout.
 
 ## Credits
